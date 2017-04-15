@@ -6,3 +6,4 @@ if __name__=="__main__":
   env = OpenAIGym("FrozenLake-v0", True)
   ai = AI(env)
   ai.play_qtable()
+  env.uploadGame()

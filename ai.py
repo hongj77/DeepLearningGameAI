@@ -2,7 +2,17 @@ from network import DeepQNetwork
 import numpy as np
 
 class AI:
-  ''' AI agent that we use to interact with the game environment. '''
+  """AI agent that we use to interact with the game environment. 
+
+    attributes:
+        env [gym.Environment] 
+        Q [np.ndarray] - Q-function array Q[s,a] which indicates the quality of action a from state s, calculates max total reward 
+        network [DeepQNetwork] - CNN that learns Q-function 
+        learning_rate [float]
+        futrue_discount [float]
+        num_episodes [int]
+        num_episode_length [int]
+  """
 
   def __init__(self, env):
     self.env = env
