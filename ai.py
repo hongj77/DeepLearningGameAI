@@ -1,4 +1,5 @@
 from network import DeepQNetwork
+from network import DeepQNetworkState
 import numpy as np
 
 class AI:
@@ -54,9 +55,10 @@ class AI:
                 break
 
   def play_nn(self): 
-    print 
+    
     for g in range(self.num_episodes):
         state = self.env.reset()
+        network_state = DeepQNetworkState(DeepQNetworkState.prepare(state),np.zeros(state.shape),np.zeros(state.shape),np.zeros(state.shape))
         total_reward = 0
         while True:
             self.env.render_screen()
@@ -68,7 +70,10 @@ class AI:
             if done:
                 break 
             
-            self.network.insert_tuple_into_replay_memory((state,action,reward,new_state))
+
+            new_network_state = DeepQNetworkState(DeepQNetworkState.prepare(new_state), network_state.s0, network_state.s1, network_state.s2)
+
+            self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state))
 
             #train cnn 
             if self.batch_size < self.network.replay_memory_size():
@@ -77,6 +82,7 @@ class AI:
                     self.network.train(transition)
 
             state = new_state
+            network_state = new_network_state
             total_reward += reward 
 
 

@@ -33,16 +33,33 @@ class DeepQNetwork:
   def predict(self,state): pass
 
 
-class DeepQNetworkState():
+class DeepQNetworkState:
 
   """
     attributes:
-      screens 
+      screens - [h,w,4] array
+      s0 - state 1 converted to grayscale 
+      s1 - state 2 converted to grayscale 
+      s2 - state 3 converted to grayscale 
+      s3 - state 4 converted to grayscale 
   """
   
   """s1 - s3 are OpenAIGym Boxes"""
   def __init__(self,s0,s1,s2,s3):
-    pass 
+    self.s0 = s0
+    self.s1 = s1
+    self.s2 = s2
+    self.s3 = s3
+    self.screens = np.concatenate((s0,s1,s2,s3), axis=2)
+
+  @staticmethod
+  def prepare(state):
+    sg = DeepQNetworkState.convert_to_grayscale(state)
+    return sg[:,:,np.newaxis]
+
+  @staticmethod
+  def convert_to_grayscale(image):
+    return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
 
 
