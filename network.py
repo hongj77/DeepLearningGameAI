@@ -32,7 +32,7 @@ class DeepQNetwork:
 
   def predict(self,state): pass
 
-def test(self):
+def test():
 
     # TEMP
     batch_size = 10 
@@ -56,11 +56,10 @@ def test(self):
     y = tf.placeholder(tf.float32, [None, n_actions])
 
     # sample data filled with all 0's representing a Grayscale game screen
-    sample_data = np.zeros([height, width, num_screens], dtype=np.float32)
-    print(sample_data.shape)
+    sample_data = np.zeros([1, height*width*num_screens], dtype=np.float32)
 
     # reshape to a 4D tensor
-    x_tensor = tf.reshape(sample_data, [-1, height, width, num_screens])
+    x_tensor = tf.reshape(x, [-1, height, width, num_screens])
     print(x_tensor.shape)
 
     weights = {
@@ -88,37 +87,21 @@ def test(self):
     conv1 = conv2d(x_tensor, weights['wc1'], biases['bc1'])
     conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
     conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
-
-    # reshape and add bias + relu
     fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
     fc1 = tf.nn.relu(fc1)
-
     out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
 
-    print out
-
-    # # loss 
+    # todo loss 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out, labels=y))
-
-    # loss = tf.reduce_sum(1.0)
     optimizer = tf.train.AdamOptimizer().minimize(loss)
 
-    correct_pred = tf.equal(tf.argmax(out, 1), tf.argmax(y, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     init = tf.global_variables_initializer()
 
-    print "accuracy"
-    print accuracy
-    print "optimizer"
-    print optimizer
-
-    with tf.Session() as session:
-      result = session.run(slice, feed_dict={image: raw_image_data})
-      print(result.shape)
-
-    # # evaluate model
-    # correct_pred = tf.equal()
+    with tf.Session() as sess:
+        sess.run(init)
+        result = sess.run(out, feed_dict={x: sample_data})
+        print(result)
 
 class DeepQNetworkState:
 
@@ -149,6 +132,8 @@ class DeepQNetworkState:
     return np.dot(image[...,:3], [0.299, 0.587, 0.114])
 
 
+if __name__=="__main__":
+  test()
 
 
 
