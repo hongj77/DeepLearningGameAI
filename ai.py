@@ -20,14 +20,12 @@ class AI:
     # TODO: implement network
     self.network = DeepQNetwork()
 
-    # temporary Q-table
-    self.Q = np.zeros([self.env.screenSpace(),self.env.totalMoves()]);
-
     # hyperparameters
     self.learning_rate = .85
     self.future_discount = .99
     self.num_episodes = 1000
     self.num_episode_length = 100
+    self.batch_size = 100
 
   def train(self): 
     pass
@@ -36,17 +34,18 @@ class AI:
     pass
 
   def play_qtable(self):    
+    Q = np.zeros([self.env.screen_space(),self.env.total_moves()]);
     for g in range(self.num_episodes):
         state = self.env.reset()
         total_reward = 0
-        self.env.renderScreen()
+        self.env.render_screen()
         for _ in range(self.num_episode_length):
             #pick action w/ largest Q plus noise (more noise in beginning)
-            action = np.argmax(self.Q[state,:] + np.random.randn(1,self.env.totalMoves())*(1./(g+1)))
+            action = np.argmax(Q[state,:] + np.random.randn(1,self.env.total_moves())*(1./(g+1)))
             #take a step in that direction 
             new_state, reward, done, info = self.env.take_action(action)
             #update Q table of current state,action
-            self.Q[state,action] = self.Q[state,action] + self.learning_rate * (reward + self.future_discount * np.max(self.Q[new_state,:]) - self.Q[state,action])
+            Q[state,action] = Q[state,action] + self.learning_rate * (reward + self.future_discount * np.max(Q[new_state,:]) - Q[state,action])
             
             total_reward += reward 
             state = new_state
@@ -54,8 +53,30 @@ class AI:
             if done:
                 break
 
-        if g == self.num_episodes - 1:
-            print(total_reward)
-
   def play_nn(self): 
-    pass
+    print 
+    for g in range(self.num_episodes):
+        state = self.env.reset()
+        total_reward = 0
+        
+        while True:
+            self.env.render_screen()
+            #pick action w/ largest Q plus noise (more noise in beginning) 
+            #action = np.argmax(self.network.predict(state) + np.random.randn(1,self.env.total_moves())*(1./(g+1)))
+            action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
+            new_state, reward, done, info = self.env.take_action(action)
+
+            if done:
+                break 
+            
+            self.network.insert_tuple_into_replay_memory((state,action,reward,new_state))
+
+            #train cnn 
+            if self.batch_size < self.network.replay_memory_size():
+                batch = self.network.sample_random_replay_memory(self.batch_size)
+                for transition in batch:
+                    self.network.train(transition)
+
+            state = new_state
+            total_reward += reward       
+

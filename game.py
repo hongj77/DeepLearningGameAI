@@ -26,20 +26,20 @@ class OpenAIGym:
   def take_action(self, action):
     return self.env.step(action)
 
-  def renderScreen(self):
+  def render_screen(self):
     if self.render:
       self.env.render()
 
   def reset(self):
     return self.env.reset()
 
-  def totalMoves(self):
+  def total_moves(self):
     return self.env.action_space.n
 
-  def screenSpace(self):
+  def screen_space(self):
     return self.env.observation_space.n
 
-  def uploadGame(self):
+  def upload_game(self):
     self.env.close()
     gym.upload(self.upload_name, api_key= API_KEY)
 

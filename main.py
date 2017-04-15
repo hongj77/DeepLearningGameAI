@@ -3,7 +3,7 @@ from ai import AI
 from game import OpenAIGym
 
 if __name__=="__main__":
-  env = OpenAIGym("FrozenLake-v0", True)
+  env = OpenAIGym("DemonAttack-v0", True)
   ai = AI(env)
-  ai.play_qtable()
-  env.uploadGame()
+  ai.play_nn()
+  env.upload_game()
