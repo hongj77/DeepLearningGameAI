@@ -58,7 +58,6 @@ class AI:
     for g in range(self.num_episodes):
         state = self.env.reset()
         total_reward = 0
-        
         while True:
             self.env.render_screen()
             #pick action w/ largest Q plus noise (more noise in beginning) 
@@ -78,5 +77,6 @@ class AI:
                     self.network.train(transition)
 
             state = new_state
-            total_reward += reward       
+            total_reward += reward 
+
 

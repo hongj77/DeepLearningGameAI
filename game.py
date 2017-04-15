@@ -33,6 +33,9 @@ class OpenAIGym:
   def reset(self):
     return self.env.reset()
 
+  def close(self):
+    self.env.close()
+
   def total_moves(self):
     return self.env.action_space.n
 
