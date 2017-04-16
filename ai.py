@@ -1,6 +1,7 @@
 from network import DeepQNetwork
 from network import DeepQNetworkState
 import numpy as np
+import random
 
 class AI:
   """AI agent that we use to interact with the game environment. 
@@ -63,8 +64,13 @@ class AI:
         total_reward = 0
         while True:
             self.env.render_screen()
-            #pick action w/ largest Q plus noise (more noise in beginning) 
-            action = np.argmax(self.network.take_action(network_state) + epsilon * np.random.randn(1,self.env.total_moves()))
+            
+            #with small prob pick random action 
+            if random.random() < epsilon:
+                action = np.argmax(np.random.randn(1,self.env.total_moves()))
+            else:
+                action = self.network.take_action(network_state) 
+            
             #action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
             new_state, reward, done, info = self.env.take_action(action)
 

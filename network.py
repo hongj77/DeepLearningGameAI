@@ -17,7 +17,7 @@ class DeepQNetwork:
   # initializes the layers of the CNN
     self.replay_memory = []
     batch_size = 10 
-    learning_rate = .005
+    learning_rate = .00005
 
     height = 84
     width = 84
@@ -60,7 +60,7 @@ class DeepQNetwork:
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
     
-    self.loss = 1./2 * tf.reduce_mean(tf.square(np.amax(self.out)-self.y))
+    self.loss = 1./2 * tf.reduce_mean(tf.square(self.out-self.y))
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
     self.sess = tf.Session()
     self.sess.run(tf.global_variables_initializer()) 
