@@ -26,7 +26,7 @@ class AI:
     self.future_discount = .99
     self.num_episodes = 1000
     self.num_episode_length = 100
-    self.batch_size = 100
+    self.batch_size = 10
 
   def train(self): 
     pass
@@ -55,10 +55,10 @@ class AI:
                 break
 
   def play_nn(self): 
-    
     for g in range(self.num_episodes):
         state = self.env.reset()
-        network_state = DeepQNetworkState(DeepQNetworkState.prepare(state),np.zeros(state.shape),np.zeros(state.shape),np.zeros(state.shape))
+        prepared_state = DeepQNetworkState.preprocess(state)
+        network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
         total_reward = 0
         while True:
             self.env.render_screen()
@@ -71,7 +71,7 @@ class AI:
                 break 
             
 
-            new_network_state = DeepQNetworkState(DeepQNetworkState.prepare(new_state), network_state.s0, network_state.s1, network_state.s2)
+            new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
 
             self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state))
 
@@ -84,5 +84,6 @@ class AI:
             state = new_state
             network_state = new_network_state
             total_reward += reward 
+            print(total_reward)
 
 
