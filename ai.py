@@ -55,6 +55,7 @@ class AI:
                 break
 
   def play_nn(self): 
+    epsilon = .05
     for g in range(self.num_episodes):
         state = self.env.reset()
         prepared_state = DeepQNetworkState.preprocess(state)
@@ -63,8 +64,8 @@ class AI:
         while True:
             self.env.render_screen()
             #pick action w/ largest Q plus noise (more noise in beginning) 
-            #action = np.argmax(self.network.predict(state) + np.random.randn(1,self.env.total_moves())*(1./(g+1)))
-            action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
+            action = np.argmax(self.network.take_action(network_state) + epsilon * np.random.randn(1,self.env.total_moves()))
+            #action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
             new_state, reward, done, info = self.env.take_action(action)
 
             if done:

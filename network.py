@@ -17,7 +17,7 @@ class DeepQNetwork:
   # initializes the layers of the CNN
     self.replay_memory = []
     batch_size = 10 
-    learning_rate = .05
+    learning_rate = .005
 
     height = 84
     width = 84
@@ -118,11 +118,15 @@ class DeepQNetwork:
     print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis]}))
 
   def predict(self,state):
-    self.sess.run(tf.global_variables_initializer())
     result = self.sess.run(self.out, feed_dict={self.x: state})
     return np.amax(result[:,:], axis = 1)
 
-    
+  def take_action(self,state):
+    state = state.screens.reshape(1,84*84*4)
+    result = self.sess.run(self.out, feed_dict={self.x: state})
+    print(np.argmax(result[0,:]))
+    return np.argmax(result[0,:])
+
 class DeepQNetworkState:
 
   """
