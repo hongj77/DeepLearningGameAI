@@ -18,16 +18,12 @@ class AI:
 
   def __init__(self, env):
     self.env = env
-
-    # TODO: implement network
-    self.network = DeepQNetwork()
-
-    # hyperparameters
     self.learning_rate = .85
     self.future_discount = .99
-    self.num_episodes = 100
+    self.num_episodes = 30
     self.num_episode_length = 100
-    self.batch_size = 32 #Google's DeepMind number 
+    self.batch_size = 3 #Google's DeepMind number 
+    self.network = DeepQNetwork(self.batch_size)
 
   def train(self): 
     pass
@@ -56,7 +52,8 @@ class AI:
                 break
 
   def play_nn(self): 
-    epsilon = 1
+    epsilon = .1
+
     for g in range(self.num_episodes):
         print "starting game:", g
         state = self.env.reset()
@@ -67,14 +64,15 @@ class AI:
             self.env.render_screen()
             
             #with small prob pick random action 
-            if random.uniform(0,1) <= epsilon:
+            if np.random.uniform(0,1) <= epsilon:
                 action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
-                print(action)
+                print("epsilon!!!!!!")
             else:
                 action = self.network.take_action(network_state)
+                print(action)
 
             epsilon -= 1./1000000
-            #action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
+            
             new_state, reward, done, info = self.env.take_action(action)
 
             if done:

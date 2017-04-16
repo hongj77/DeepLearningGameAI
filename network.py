@@ -13,21 +13,23 @@ class DeepQNetwork:
       replayMemory - [(s,a,r,s')] array of 4-tuple representing replay memory 
   """
   
-  def __init__(self): 
+  def __init__(self, batch_size): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = .0005
+    learning_rate = 0.00001
 
-    height = 84
-    width = 84
-    num_screens = 4
+    self.batch_size = batch_size
+    self.height = 84
+    self.width = 84
+    self.num_screens = 4
     # number of possible outputs of the network
-    n_actions = 6
+    self.n_actions = 6
 
-    self.x = tf.placeholder(tf.float32, [None, height*width*num_screens])
+    self.x = tf.placeholder(tf.float32, [None, self.height*self.width*self.num_screens])
     self.y = tf.placeholder(tf.float32, [None, 1])
-    # reshape to a 4D tensor
-    self.x_tensor = tf.reshape(self.x, [-1, height, width, num_screens])
+
+    # input into the network with shape (batch_size, 84,84,4)
+    self.x_tensor = tf.reshape(self.x, [-1, self.height, self.width, self.num_screens])
 
     self.weights = {
       # 8x8 filter, 4 inputs 32 outputs
@@ -39,7 +41,7 @@ class DeepQNetwork:
       # fully connected, 7x7x64 inputs 512 outputs
       'wd1': tf.Variable(tf.random_normal([7*7*64, 512])),
       # 512 inputs, 18 outputs (number of possible actions)
-      'out': tf.Variable(tf.random_normal([512, n_actions]))
+      'out': tf.Variable(tf.random_normal([512, self.n_actions]))
     }
 
     self.biases = {
@@ -47,25 +49,47 @@ class DeepQNetwork:
       'bc2': tf.Variable(tf.zeros([64])),
       'bc3': tf.Variable(tf.zeros([64])),
       'bd1': tf.Variable(tf.zeros([512])),
-      'out': tf.Variable(tf.zeros([n_actions])),
+      'out': tf.Variable(tf.zeros([self.n_actions])),
     }
 
     self.conv1 = DeepQNetwork.conv2d(self.x_tensor, self.weights['wc1'], self.biases['bc1'],4)
     self.conv2 = DeepQNetwork.conv2d(self.conv1, self.weights['wc2'], self.biases['bc2'],2)
     self.conv3 = DeepQNetwork.conv2d(self.conv2, self.weights['wc3'], self.biases['bc3'])
     fc1 = tf.reshape(self.conv3, [-1, self.weights['wd1'].get_shape().as_list()[0]])
-
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
-    self.preds = tf.reduce_max(self.out, axis = 1, keep_dims = True)
-    self.loss = 1./2 * tf.reduce_mean(tf.square(self.preds-self.y))
-    #self.loss = tf.losses.log_loss(self.y,self.preds)
-    self.optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(self.loss)
+
+    # [0,1,2,...,batch_size]
+    tf_range = tf.range(0, self.batch_size)
+
+    # expects shape (?, ) in ranges (0..5)
+    self.actions_taken = tf.placeholder(tf.int32, [self.batch_size])
+
+    # get a list of [(tf_range[0], actions_taken[0]), (tf_range[1], actions_taken[1])...]
+    coords = tf.stack([tf_range, self.actions_taken], axis=1)
+
+    # get a tensor with 1's at position (coords[0], ...)
+    binary_mask = tf.sparse_to_dense(coords, (self.batch_size, self.n_actions), 1)
+    binary_mask = tf.cast(binary_mask, tf.bool)
+
+    # select either the mask or zero
+    zeros = tf.zeros((self.batch_size, self.n_actions))
+    self.preds = tf.where(binary_mask, self.out, zeros) 
+
+    # preds is still (?, 6), but only 1 number in each row is non-zero
+    self.preds = tf.reduce_sum(self.preds, axis=1, keep_dims=True)
+    # preds is now (?, 1)
+
+    self.loss = 1./2 * tf.reduce_mean(tf.square(self.y - self.preds))
+    self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+
+    # start the session and init
     self.sess = tf.Session()
     self.sess.run(tf.global_variables_initializer()) 
 
-      # create the conv_net model
+
+  # create the conv_net model
   @staticmethod
   def conv2d(x, W, b, strides=1):
     # Conv2D wrapper, with bias and relu activation
@@ -86,8 +110,6 @@ class DeepQNetwork:
   def replay_memory_size(self):
     return len(self.replay_memory)
     
-  def _createNetwork(): pass
-
   # trains the network using batches of replay memory
   def train(self, transition):
     # sample data filled with all 0's representing a Grayscale game screen
@@ -104,17 +126,20 @@ class DeepQNetwork:
 
   def train_n_samples(self,transitions):
     batch_size = len(transitions)
-    states = np.ndarray((84,84,4,batch_size))
-    new_states = np.ndarray((84,84,4,batch_size))
-    rewards = np.ndarray((batch_size))
+    states = np.ndarray((batch_size,84,84,4))
+    new_states = np.ndarray((batch_size,84,84,4))
+    actions = np.ndarray(batch_size) # shape (?,)
+    rewards = np.ndarray(batch_size)
     target = np.ndarray((batch_size,1))
+
     for i in range(batch_size):
       s, a, r, ns, _ = transitions[i]
-      ns = ns.screens[:,:,:]
       s = s.screens[:,:,:]
-      states[:,:,:,i] = s
-      new_states[:,:,:,i] = ns 
+      ns = ns.screens[:,:,:]
+      states[i,:,:,:] = s
+      new_states[i,:,:,:] = ns 
       rewards[i] = r
+      actions[i] = a
       
     states = states.reshape(batch_size,84*84*4)
     new_states = states.reshape(batch_size,84*84*4)
@@ -125,14 +150,29 @@ class DeepQNetwork:
       if d:
         target[i] = r
 
-    self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis]})
-    print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis]}))
+    self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions})
+    print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions}))
+
 
   def predict(self,state):
+    """
+      attributes:
+        state - array of size (batch_size, 84x84x4)
+      returns:
+        np array of size (batch_size, 1) 
+        represents of the max Q-value for each example in the batch
+    """
     result = self.sess.run(self.out, feed_dict={self.x: state})
     return np.amax(result[:,:], axis = 1)
 
   def take_action(self,state):
+    """
+      attributes:
+        state - DeepQNetworkState object
+      returns:
+        np array of a single number
+        a single action number with the highest Q-value
+    """
     state = state.screens.reshape(1,84*84*4)
     result = self.sess.run(self.out, feed_dict={self.x: state})
     return np.argmax(result[0,:])
