@@ -22,8 +22,8 @@ class AI:
     self.future_discount = .99
     self.num_episodes = 2000
     self.num_episode_length = 100
-    self.batch_size = 1 #Google's DeepMind number 
-    self.network = DeepQNetwork(self.batch_size)
+    self.batch_size = 32 #Google's DeepMind number 
+    self.network = DeepQNetwork(self.batch_size, save_cur_sess = True, save_path = "SavedSessions/testing", restore_path = "")
 
   def train(self): 
     pass
@@ -67,16 +67,11 @@ class AI:
             uniform_n = np.random.uniform(0,1)
             if uniform_n <= epsilon:
                 action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
-                print("epsilon!!!!!!")
             else:
                 action = self.network.take_action(network_state)
-                print("action:")
-                print(action)
 
             if epsilon > 0.02:
                 epsilon -= 1./100000
-            
-            print "epsilon:", epsilon
             
             new_state, reward, done, info = self.env.take_action(action)
 

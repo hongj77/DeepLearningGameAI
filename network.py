@@ -13,7 +13,7 @@ class DeepQNetwork:
       replayMemory - [(s,a,r,s')] array of 4-tuple representing replay memory 
   """
   
-  def __init__(self, batch_size): 
+  def __init__(self, batch_size, save_cur_sess = False, save_path = "", restore_path = ""): 
   # initializes the layers of the CNN
     self.replay_memory = []
     learning_rate = 0.05
@@ -26,8 +26,11 @@ class DeepQNetwork:
     self.n_actions = 6
     self.discount_factor = 0.2
 
+    #PLACEHOLDERS 
     self.x = tf.placeholder(tf.float32, [None, self.height*self.width*self.num_screens])
     self.y = tf.placeholder(tf.float32, [None, 1])
+    # expects shape (?, ) in ranges (0..5)
+    self.actions_taken = tf.placeholder(tf.int32, [self.batch_size])
 
     # input into the network with shape (batch_size, 84,84,4)
     self.x_tensor = tf.reshape(self.x, [-1, self.height, self.width, self.num_screens])
@@ -61,9 +64,6 @@ class DeepQNetwork:
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
 
-    # expects shape (?, ) in ranges (0..5)
-    self.actions_taken = tf.placeholder(tf.int32, [self.batch_size])
-
     action_mask = tf.one_hot(
         self.actions_taken, depth=self.n_actions, on_value=1.0, off_value=0.0)
 
@@ -71,6 +71,7 @@ class DeepQNetwork:
 
     # gets the difference between target and prediction. Everything else is 0
     difference = action_mask * (self.y - self.out)
+    self.test = difference 
 
     self.loss = tf.nn.l2_loss(difference)
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
@@ -79,7 +80,18 @@ class DeepQNetwork:
     self.sess = tf.Session()
     self.sess.run(tf.global_variables_initializer()) 
 
-
+    #### SAVER ##### 
+    self.save_path = save_path
+    self.save_cur_sess = save_cur_sess
+    self.restore_path= restore_path
+    self.runs = 0
+    self.runs_till_save = 1000000
+    self.saver = tf.train.Saver()
+    
+    #restore saved session 
+    if restore_path != "":
+        self.saver.restore(self.sess, restore_path)
+  
   # create the conv_net model
   @staticmethod
   def conv2d(x, W, b, strides=1):
@@ -113,7 +125,12 @@ class DeepQNetwork:
     else:
       target[0] = self.predict(ns) + r
     self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
-    #print(self.sess.run(self.loss, feed_dict={self.x: s, self.y: [target]}))
+    
+     #save every 1000 runs 
+    if self.save_cur_sess and self.runs % self.runs_till_save:
+      self.saver.save(self.sess, self.save_path)
+
+    self.runs += 1
 
   def train_n_samples(self,transitions):
     batch_size = len(transitions)
@@ -138,16 +155,19 @@ class DeepQNetwork:
     target = self.predict(new_states) + rewards 
     assert target.shape == (batch_size, )
 
-    print "target sum:"
-    print np.sum(target)
-
     for i in range(batch_size):
       _,_,_,_,d = transitions[i]
       if d:
         target[i] = r
 
     self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions})
-    print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions}))
+    print(self.sess.run(self.test, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions}))
+    
+    #save every 1000 runs 
+    if self.save_cur_sess and self.runs % self.runs_till_save:
+      self.saver.save(self.sess, self.save_path)
+
+    self.runs += 1
 
 
   def predict(self,state):
