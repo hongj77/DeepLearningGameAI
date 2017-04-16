@@ -16,8 +16,7 @@ class DeepQNetwork:
   def __init__(self): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    batch_size = 10 
-    learning_rate = .00005
+    learning_rate = .0005
 
     height = 84
     width = 84
@@ -59,9 +58,10 @@ class DeepQNetwork:
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
-    
-    self.loss = 1./2 * tf.reduce_mean(tf.square(self.out-self.y))
-    self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+    self.preds = tf.reduce_max(self.out, axis = 1, keep_dims = True)
+    self.loss = 1./2 * tf.reduce_mean(tf.square(self.preds-self.y))
+    #self.loss = tf.losses.log_loss(self.y,self.preds)
+    self.optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(self.loss)
     self.sess = tf.Session()
     self.sess.run(tf.global_variables_initializer()) 
 
@@ -74,7 +74,7 @@ class DeepQNetwork:
     return tf.nn.relu(x)
 
   def insert_tuple_into_replay_memory(self, mem_tuple):
-    assert len(mem_tuple) == 4
+    assert len(mem_tuple) == 5
     assert type(mem_tuple) == tuple
     self.replay_memory.append(mem_tuple)
 
@@ -91,11 +91,14 @@ class DeepQNetwork:
   # trains the network using batches of replay memory
   def train(self, transition):
     # sample data filled with all 0's representing a Grayscale game screen
-    s, a, r, ns = transition 
+    s, a, r, ns, d = transition 
     ns = ns.screens.reshape(1,84*84*4)
     s = s.screens.reshape(1,84*84*4)
     target = np.zeros((1,1))
-    target[0] = self.predict(ns) + r
+    if d:
+        target[i] = r
+    else:
+      target[0] = self.predict(ns) + r
     self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
     #print(self.sess.run(self.loss, feed_dict={self.x: s, self.y: [target]}))
 
@@ -104,16 +107,24 @@ class DeepQNetwork:
     states = np.ndarray((84,84,4,batch_size))
     new_states = np.ndarray((84,84,4,batch_size))
     rewards = np.ndarray((batch_size))
+    target = np.ndarray((batch_size,1))
     for i in range(batch_size):
-      s, a, r, ns = transitions[i]
+      s, a, r, ns, _ = transitions[i]
       ns = ns.screens[:,:,:]
       s = s.screens[:,:,:]
       states[:,:,:,i] = s
       new_states[:,:,:,i] = ns 
       rewards[i] = r
+      
     states = states.reshape(batch_size,84*84*4)
     new_states = states.reshape(batch_size,84*84*4)
     target = self.predict(new_states) + rewards 
+
+    for i in range(batch_size):
+      _,_,_,_,d = transitions[i]
+      if d:
+        target[i] = r
+
     self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis]})
     print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis]}))
 
@@ -124,7 +135,6 @@ class DeepQNetwork:
   def take_action(self,state):
     state = state.screens.reshape(1,84*84*4)
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    print(np.argmax(result[0,:]))
     return np.argmax(result[0,:])
 
 class DeepQNetworkState:

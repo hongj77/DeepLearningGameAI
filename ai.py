@@ -27,7 +27,7 @@ class AI:
     self.future_discount = .99
     self.num_episodes = 1000
     self.num_episode_length = 100
-    self.batch_size = 100
+    self.batch_size = 32 #Google's DeepMind number 
 
   def train(self): 
     pass
@@ -56,7 +56,7 @@ class AI:
                 break
 
   def play_nn(self): 
-    epsilon = .05
+    epsilon = 1
     for g in range(self.num_episodes):
         state = self.env.reset()
         prepared_state = DeepQNetworkState.preprocess(state)
@@ -66,21 +66,22 @@ class AI:
             self.env.render_screen()
             
             #with small prob pick random action 
-            if random.random() < epsilon:
-                action = np.argmax(np.random.randn(1,self.env.total_moves()))
+            if random.uniform(0,1) <= epsilon:
+                action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
+                print(action)
             else:
-                action = self.network.take_action(network_state) 
-            
+                action = self.network.take_action(network_state)
+
+            epsilon -= 1./1000000
             #action = np.argmax(np.random.randn(1,self.env.total_moves())*(1./(g+1)))
             new_state, reward, done, info = self.env.take_action(action)
 
             if done:
                 break 
             
-
             new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
 
-            self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state))
+            self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
 
             #train cnn 
             if self.batch_size < self.network.replay_memory_size():
