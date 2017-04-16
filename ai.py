@@ -26,7 +26,7 @@ class AI:
     self.future_discount = .99
     self.num_episodes = 1000
     self.num_episode_length = 100
-    self.batch_size = 10
+    self.batch_size = 500
 
   def train(self): 
     pass
@@ -78,12 +78,12 @@ class AI:
             #train cnn 
             if self.batch_size < self.network.replay_memory_size():
                 batch = self.network.sample_random_replay_memory(self.batch_size)
-                for transition in batch:
-                    self.network.train(transition)
+                self.network.train_n_samples(batch)
+                #for transition in batch:
+                    #self.network.train(transition)
 
             state = new_state
             network_state = new_network_state
             total_reward += reward 
-            print(total_reward)
 
 

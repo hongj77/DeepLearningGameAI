@@ -26,8 +26,7 @@ class DeepQNetwork:
     n_actions = 6
 
     self.x = tf.placeholder(tf.float32, [None, height*width*num_screens])
-    self.y = tf.placeholder(tf.float32, [1])
-    self.r = tf.placeholder(tf.float32, [1])
+    self.y = tf.placeholder(tf.float32, [None, 1])
     # reshape to a 4D tensor
     self.x_tensor = tf.reshape(self.x, [-1, height, width, num_screens])
 
@@ -53,25 +52,18 @@ class DeepQNetwork:
     }
 
     self.conv1 = DeepQNetwork.conv2d(self.x_tensor, self.weights['wc1'], self.biases['bc1'],4)
-    print(self.conv1.shape)
     self.conv2 = DeepQNetwork.conv2d(self.conv1, self.weights['wc2'], self.biases['bc2'],2)
-    print(self.conv2.shape)
     self.conv3 = DeepQNetwork.conv2d(self.conv2, self.weights['wc3'], self.biases['bc3'])
-    print(self.conv3.shape)
     fc1 = tf.reshape(self.conv3, [-1, self.weights['wd1'].get_shape().as_list()[0]])
 
-    print(self.conv3.shape)
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
-    print(self.fc1.shape)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
-    print(self.out.shape)
     
-    self.testing = self.out
-    self.testing1 = self.y
     self.loss = 1./2 * tf.reduce_mean(tf.square(np.amax(self.out)-self.y))
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
     self.sess = tf.Session()
+    self.sess.run(tf.global_variables_initializer()) 
 
       # create the conv_net model
   @staticmethod
@@ -102,10 +94,28 @@ class DeepQNetwork:
     s, a, r, ns = transition 
     ns = ns.screens.reshape(1,84*84*4)
     s = s.screens.reshape(1,84*84*4)
-    target = self.predict(ns) + r 
-    self.sess.run(tf.global_variables_initializer()) 
-    self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: [target]})
+    target = np.zeros((1,1))
+    target[0] = self.predict(ns) + r
+    self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
     #print(self.sess.run(self.loss, feed_dict={self.x: s, self.y: [target]}))
+
+  def train_n_samples(self,transitions):
+    batch_size = len(transitions)
+    states = np.ndarray((84,84,4,batch_size))
+    new_states = np.ndarray((84,84,4,batch_size))
+    rewards = np.ndarray((batch_size))
+    for i in range(batch_size):
+      s, a, r, ns = transitions[i]
+      ns = ns.screens[:,:,:]
+      s = s.screens[:,:,:]
+      states[:,:,:,i] = s
+      new_states[:,:,:,i] = ns 
+      rewards[i] = r
+    states = states.reshape(batch_size,84*84*4)
+    new_states = states.reshape(batch_size,84*84*4)
+    target = self.predict(new_states) + rewards 
+    target = np.asarray(target)
+    self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis]})
 
   def predict(self,state):
     self.sess.run(tf.global_variables_initializer())
