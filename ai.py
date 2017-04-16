@@ -87,7 +87,9 @@ class AI:
             # train cnn 
             if self.batch_size < self.network.replay_memory_size():
                 batch = self.network.sample_random_replay_memory(self.batch_size)
-                self.network.train_n_samples(batch)
+                for t in batch:
+                    self.network.train(t)
+                #self.network.train_n_samples(batch)
 
             state = new_state
             network_state = new_network_state

@@ -16,7 +16,7 @@ class DeepQNetwork:
   def __init__(self): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = .0005
+    learning_rate = .05
 
     height = 84
     width = 84
@@ -26,6 +26,7 @@ class DeepQNetwork:
 
     self.x = tf.placeholder(tf.float32, [None, height*width*num_screens])
     self.y = tf.placeholder(tf.float32, [None, 1])
+    self.a = tf.placeholder(tf.int32, [None,1])
     # reshape to a 4D tensor
     self.x_tensor = tf.reshape(self.x, [-1, height, width, num_screens])
 
@@ -58,7 +59,9 @@ class DeepQNetwork:
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
-    self.preds = tf.reduce_max(self.out, axis = 1, keep_dims = True)
+    #self.preds = tf.gather(self.out[:,:],self.a)
+    self.preds = tf.gather(self.out, self.a)
+    print(self.preds.shape)
     self.loss = 1./2 * tf.reduce_mean(tf.square(self.preds-self.y))
     #self.loss = tf.losses.log_loss(self.y,self.preds)
     self.optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(self.loss)
@@ -95,11 +98,13 @@ class DeepQNetwork:
     ns = ns.screens.reshape(1,84*84*4)
     s = s.screens.reshape(1,84*84*4)
     target = np.zeros((1,1))
+    action = np.zeros((1,1))
+    action[0] = a
     if d:
         target[i] = r
     else:
       target[0] = self.predict(ns) + r
-    self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
+    self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target, self.a: action})
     #print(self.sess.run(self.loss, feed_dict={self.x: s, self.y: [target]}))
 
   def train_n_samples(self,transitions):
@@ -108,6 +113,7 @@ class DeepQNetwork:
     new_states = np.ndarray((84,84,4,batch_size))
     rewards = np.ndarray((batch_size))
     target = np.ndarray((batch_size,1))
+    actions = np.ndarray((batch_size,1))
     for i in range(batch_size):
       s, a, r, ns, _ = transitions[i]
       ns = ns.screens[:,:,:]
@@ -115,6 +121,7 @@ class DeepQNetwork:
       states[:,:,:,i] = s
       new_states[:,:,:,i] = ns 
       rewards[i] = r
+      actions[i] = a
       
     states = states.reshape(batch_size,84*84*4)
     new_states = states.reshape(batch_size,84*84*4)
@@ -125,8 +132,8 @@ class DeepQNetwork:
       if d:
         target[i] = r
 
-    self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis]})
-    print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis]}))
+    self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.a: actions})
+    print(self.sess.run(self.preds, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.a: actions}))
 
   def predict(self,state):
     result = self.sess.run(self.out, feed_dict={self.x: state})
