@@ -26,7 +26,7 @@ class AI:
     self.future_discount = .99
     self.num_episodes = 1000
     self.num_episode_length = 100
-    self.batch_size = 500
+    self.batch_size = 100
 
   def train(self): 
     pass

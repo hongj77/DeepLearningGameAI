@@ -114,13 +114,13 @@ class DeepQNetwork:
     states = states.reshape(batch_size,84*84*4)
     new_states = states.reshape(batch_size,84*84*4)
     target = self.predict(new_states) + rewards 
-    target = np.asarray(target)
     self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis]})
+    print(self.sess.run(self.loss, feed_dict={self.x: states, self.y: target[:,np.newaxis]}))
 
   def predict(self,state):
     self.sess.run(tf.global_variables_initializer())
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    return np.amax(result[:,:])
+    return np.amax(result[:,:], axis = 1)
 
     
 class DeepQNetworkState:
