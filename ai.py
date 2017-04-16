@@ -25,7 +25,7 @@ class AI:
     # hyperparameters
     self.learning_rate = .85
     self.future_discount = .99
-    self.num_episodes = 1000
+    self.num_episodes = 100
     self.num_episode_length = 100
     self.batch_size = 32 #Google's DeepMind number 
 
@@ -58,6 +58,7 @@ class AI:
   def play_nn(self): 
     epsilon = 1
     for g in range(self.num_episodes):
+        print "starting game:", g
         state = self.env.reset()
         prepared_state = DeepQNetworkState.preprocess(state)
         network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
@@ -83,7 +84,7 @@ class AI:
 
             self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
 
-            #train cnn 
+            # train cnn 
             if self.batch_size < self.network.replay_memory_size():
                 batch = self.network.sample_random_replay_memory(self.batch_size)
                 self.network.train_n_samples(batch)
