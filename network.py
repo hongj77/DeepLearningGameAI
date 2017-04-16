@@ -74,6 +74,7 @@ class DeepQNetwork:
     self.test = difference 
 
     self.loss = tf.nn.l2_loss(difference)
+    self.loss_sum = tf.reduce_sum(self.loss)
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
 
     # start the session and init
@@ -88,6 +89,7 @@ class DeepQNetwork:
     self.runs_till_save = 1000000
     self.saver = tf.train.Saver()
     
+    self.callback = None 
     #restore saved session 
     if restore_path != "":
         self.saver.restore(self.sess, restore_path)
@@ -125,11 +127,15 @@ class DeepQNetwork:
     else:
       target[0] = self.predict(ns) + r
     self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
-    
+    loss_sum = self.sess.run(self.loss_sum, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions})
+    qvalue = self.sess.run(self.out, feed_dict={self.x: state})
+
      #save every 1000 runs 
-    if self.save_cur_sess and self.runs % self.runs_till_save:
+    if self.save_cur_sess and self.runs % self.runs_till_save == 0:
       self.saver.save(self.sess, self.save_path)
 
+    if self.callback:
+      self.callback.on_train(loss_sum,qvalue)
     self.runs += 1
 
   def train_n_samples(self,transitions):
@@ -161,13 +167,20 @@ class DeepQNetwork:
         target[i] = r
 
     self.sess.run(self.optimizer, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions})
-    print(self.sess.run(self.test, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions}))
     
+    loss_sum = self.sess.run(self.loss_sum, feed_dict={self.x: states, self.y: target[:,np.newaxis], self.actions_taken: actions})
+    print(loss_sum)
+    
+    qvalues = self.sess.run(self.out, feed_dict={self.x: states})
+
     #save every 1000 runs 
-    if self.save_cur_sess and self.runs % self.runs_till_save:
+    if self.save_cur_sess and self.runs % self.runs_till_save == 0:
       self.saver.save(self.sess, self.save_path)
 
     self.runs += 1
+
+    if self.callback:
+      self.callback.on_train(loss_sum,qvalues)
 
 
   def predict(self,state):

@@ -2,6 +2,7 @@ from network import DeepQNetwork
 from network import DeepQNetworkState
 import numpy as np
 import random
+from statistics import Stats 
 
 class AI:
   """AI agent that we use to interact with the game environment. 
@@ -24,6 +25,8 @@ class AI:
     self.num_episode_length = 100
     self.batch_size = 32 #Google's DeepMind number 
     self.network = DeepQNetwork(self.batch_size, save_cur_sess = True, save_path = "SavedSessions/testing", restore_path = "")
+
+    self.stats = Stats(self.network,self.env)
 
   def train(self): 
     pass
@@ -61,6 +64,7 @@ class AI:
         network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
         total_reward = 0
         while True:
+            
             self.env.render_screen()
             
             #with small prob pick random action 
@@ -74,9 +78,6 @@ class AI:
                 epsilon -= 1./100000
             
             new_state, reward, done, info = self.env.take_action(action)
-
-            if done:
-                break 
             
             new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
             self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
@@ -88,6 +89,9 @@ class AI:
 
             state = new_state
             network_state = new_network_state
-            total_reward += reward 
+            self.stats.on_step(action, reward, done)
+
+            if done:
+                break 
 
 
