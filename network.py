@@ -124,7 +124,7 @@ class DeepQNetwork:
   def take_action(self,state):
     state = state.screens.reshape(1,84*84*4)
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    print(np.argmax(result[0,:]))
+    # print(np.argmax(result[0,:]))
     return np.argmax(result[0,:])
 
 class DeepQNetworkState:
