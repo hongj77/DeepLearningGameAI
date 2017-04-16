@@ -16,7 +16,7 @@ class DeepQNetwork:
   def __init__(self, batch_size): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = 0.01
+    learning_rate = 0.05
 
     self.batch_size = batch_size
     self.height = 84
@@ -24,7 +24,7 @@ class DeepQNetwork:
     self.num_screens = 4
     # number of possible outputs of the network
     self.n_actions = 6
-    self.discount_factor = 0.5
+    self.discount_factor = 0.2
 
     self.x = tf.placeholder(tf.float32, [None, self.height*self.width*self.num_screens])
     self.y = tf.placeholder(tf.float32, [None, 1])
@@ -138,7 +138,7 @@ class DeepQNetwork:
     target = self.predict(new_states) + rewards 
     assert target.shape == (batch_size, )
 
-    print "target sum"
+    print "target sum:"
     print np.sum(target)
 
     for i in range(batch_size):

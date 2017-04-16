@@ -20,9 +20,9 @@ class AI:
     self.env = env
     self.learning_rate = .85
     self.future_discount = .99
-    self.num_episodes = 30
+    self.num_episodes = 2000
     self.num_episode_length = 100
-    self.batch_size = 3 #Google's DeepMind number 
+    self.batch_size = 1 #Google's DeepMind number 
     self.network = DeepQNetwork(self.batch_size)
 
   def train(self): 
@@ -55,7 +55,7 @@ class AI:
     epsilon = .3
 
     for g in range(self.num_episodes):
-        print "starting game:", g
+        print "===============================starting game:", g
         state = self.env.reset()
         prepared_state = DeepQNetworkState.preprocess(state)
         network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
@@ -70,11 +70,13 @@ class AI:
                 print("epsilon!!!!!!")
             else:
                 action = self.network.take_action(network_state)
+                print("action:")
                 print(action)
 
-            epsilon -= 1./10000
+            if epsilon > 0.02:
+                epsilon -= 1./100000
+            
             print "epsilon:", epsilon
-            print "uniform:", uniform_n
             
             new_state, reward, done, info = self.env.take_action(action)
 
