@@ -16,7 +16,7 @@ class DeepQNetwork:
   def __init__(self, batch_size): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = 0.001
+    learning_rate = 0.01
 
     self.batch_size = batch_size
     self.height = 84
@@ -24,6 +24,7 @@ class DeepQNetwork:
     self.num_screens = 4
     # number of possible outputs of the network
     self.n_actions = 6
+    self.discount_factor = 0.5
 
     self.x = tf.placeholder(tf.float32, [None, self.height*self.width*self.num_screens])
     self.y = tf.placeholder(tf.float32, [None, 1])
@@ -158,7 +159,7 @@ class DeepQNetwork:
         represents of the max Q-value for each example in the batch
     """
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    ret = np.amax(result[:,:], axis = 1)
+    ret = self.discount_factor * np.amax(result[:,:], axis = 1)
     return ret
 
   def take_action(self,state):
