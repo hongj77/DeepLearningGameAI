@@ -120,7 +120,7 @@ class DeepQNetwork:
   def predict(self,state):
     self.sess.run(tf.global_variables_initializer())
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    return np.amax(result[0,:])
+    return np.amax(result[:,:])
 
     
 class DeepQNetworkState:

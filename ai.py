@@ -79,8 +79,6 @@ class AI:
             if self.batch_size < self.network.replay_memory_size():
                 batch = self.network.sample_random_replay_memory(self.batch_size)
                 self.network.train_n_samples(batch)
-                #for transition in batch:
-                    #self.network.train(transition)
 
             state = new_state
             network_state = new_network_state
