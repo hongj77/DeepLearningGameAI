@@ -52,7 +52,7 @@ class AI:
                 break
 
   def play_nn(self): 
-    epsilon = .1
+    epsilon = .3
 
     for g in range(self.num_episodes):
         print "starting game:", g
@@ -64,14 +64,17 @@ class AI:
             self.env.render_screen()
             
             #with small prob pick random action 
-            if np.random.uniform(0,1) <= epsilon:
+            uniform_n = np.random.uniform(0,1)
+            if uniform_n <= epsilon:
                 action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
                 print("epsilon!!!!!!")
             else:
                 action = self.network.take_action(network_state)
                 print(action)
 
-            epsilon -= 1./1000000
+            epsilon -= 1./10000
+            print "epsilon:", epsilon
+            print "uniform:", uniform_n
             
             new_state, reward, done, info = self.env.take_action(action)
 
@@ -79,7 +82,6 @@ class AI:
                 break 
             
             new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
-
             self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
 
             # train cnn 

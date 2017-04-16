@@ -16,7 +16,7 @@ class DeepQNetwork:
   def __init__(self, batch_size): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = 0.00001
+    learning_rate = 0.001
 
     self.batch_size = batch_size
     self.height = 84
@@ -60,28 +60,18 @@ class DeepQNetwork:
     self.fc1 = tf.nn.relu(fc1)
     self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
 
-    # [0,1,2,...,batch_size]
-    tf_range = tf.range(0, self.batch_size)
-
     # expects shape (?, ) in ranges (0..5)
     self.actions_taken = tf.placeholder(tf.int32, [self.batch_size])
 
-    # get a list of [(tf_range[0], actions_taken[0]), (tf_range[1], actions_taken[1])...]
-    coords = tf.stack([tf_range, self.actions_taken], axis=1)
+    action_mask = tf.one_hot(
+        self.actions_taken, depth=self.n_actions, on_value=1.0, off_value=0.0)
 
-    # get a tensor with 1's at position (coords[0], ...)
-    binary_mask = tf.sparse_to_dense(coords, (self.batch_size, self.n_actions), 1)
-    binary_mask = tf.cast(binary_mask, tf.bool)
+    targets = tf.tile(self.y, [1, self.n_actions])
 
-    # select either the mask or zero
-    zeros = tf.zeros((self.batch_size, self.n_actions))
-    self.preds = tf.where(binary_mask, self.out, zeros) 
+    # gets the difference between target and prediction. Everything else is 0
+    difference = action_mask * (self.y - self.out)
 
-    # preds is still (?, 6), but only 1 number in each row is non-zero
-    self.preds = tf.reduce_sum(self.preds, axis=1, keep_dims=True)
-    # preds is now (?, 1)
-
-    self.loss = 1./2 * tf.reduce_mean(tf.square(self.y - self.preds))
+    self.loss = tf.nn.l2_loss(difference)
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
 
     # start the session and init
@@ -143,7 +133,12 @@ class DeepQNetwork:
       
     states = states.reshape(batch_size,84*84*4)
     new_states = states.reshape(batch_size,84*84*4)
+
     target = self.predict(new_states) + rewards 
+    assert target.shape == (batch_size, )
+
+    print "target sum"
+    print np.sum(target)
 
     for i in range(batch_size):
       _,_,_,_,d = transitions[i]
@@ -159,11 +154,12 @@ class DeepQNetwork:
       attributes:
         state - array of size (batch_size, 84x84x4)
       returns:
-        np array of size (batch_size, 1) 
+        np array of size (batch_size,) 
         represents of the max Q-value for each example in the batch
     """
     result = self.sess.run(self.out, feed_dict={self.x: state})
-    return np.amax(result[:,:], axis = 1)
+    ret = np.amax(result[:,:], axis = 1)
+    return ret
 
   def take_action(self,state):
     """
