@@ -3,6 +3,7 @@ from network import DeepQNetworkState
 import numpy as np
 import random
 from statistics import Stats 
+import constants as C
 
 class AI:
   """AI agent that we use to interact with the game environment. 
@@ -19,12 +20,14 @@ class AI:
 
   def __init__(self, env):
     self.env = env
-    self.learning_rate = .85
-    self.future_discount = .99
-    self.num_episodes = 2000
-    self.num_episode_length = 100
-    self.batch_size = 32 #Google's DeepMind number 
-    self.network = DeepQNetwork(self.batch_size, save_cur_sess = True, save_path = "SavedSessions/testing", restore_path = "")
+    self.learning_rate = C.ai_qtable_learning_rate
+    self.future_discount = C.ai_qtable_future_discount
+    self.num_episodes = C.ai_num_episodes
+    self.num_episode_length = C.ai_qtable_num_episode_length
+    self.batch_size = C.ai_batch_size  #Google's DeepMind number 
+    self.epsilon = C.ai_epsilon 
+    self.network = DeepQNetwork(self.batch_size, save_cur_sess = C.net_should_save, save_path = C.net_save_path, restore_path = C.net_restore_path)
+
 
     self.stats = Stats(self.network,self.env)
 
@@ -55,7 +58,7 @@ class AI:
                 break
 
   def play_nn(self): 
-    epsilon = .3
+    epsilon = self.epsilon 
 
     for g in range(self.num_episodes):
         print "===============================starting game:", g

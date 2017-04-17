@@ -3,12 +3,13 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import constants as C
 
-csv_path = "Stats/test.csv"
-png_save_path = "Stats/test.png"
-figure_height = 10
-figure_width = 20
-fields = ["average_reward","nr_games","meancost","cost_per_epoch"]
+csv_path = C.stats_csv_path
+png_save_path = C.plot_png_path 
+figure_height = C.plot_figure_height
+figure_width = C.plot_figure_width 
+fields = C.plot_stats
 
 # field definitions for numpy
 dtype = [

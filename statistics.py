@@ -8,6 +8,7 @@ from scipy import misc
 import csv
 import time 
 import sys
+import constants as C
 
 class Stats:
 
@@ -17,7 +18,7 @@ class Stats:
 
     self.network.callback = self
 
-    self.csv_path = "Stats/test.csv"
+    self.csv_path = C.stats_csv_path 
 
     if self.csv_path != "":
       self.csv_file = open(self.csv_path, "wb")
@@ -46,7 +47,6 @@ class Stats:
     self.game_rewards = 0
     self.average_reward = 0
     self.average_cost = 0
-    self.validation_states = None 
     self.meanq = 0
     self.cost = 0
 

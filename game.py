@@ -1,6 +1,7 @@
 import gym
 from gym import wrappers
 from gym import spaces
+import constants as C
 
 API_KEY = 'sk_9Ft7yJrgT2M4k7y7Fe8A'
 

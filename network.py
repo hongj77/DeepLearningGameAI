@@ -6,6 +6,7 @@ from tensorflow import contrib
 import random
 import scipy
 from scipy import misc
+import constants as C
 
 class DeepQNetwork:
   """
@@ -16,15 +17,15 @@ class DeepQNetwork:
   def __init__(self, batch_size, save_cur_sess = False, save_path = "", restore_path = ""): 
   # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = 0.05
+    learning_rate = C.net_learning_rate
 
     self.batch_size = batch_size
-    self.height = 84
-    self.width = 84
-    self.num_screens = 4
+    self.height = C.net_height
+    self.width = C.net_width 
+    self.num_screens = C.net_num_screens
     # number of possible outputs of the network
-    self.n_actions = 6
-    self.discount_factor = 0.2
+    self.n_actions = C.net_n_actions
+    self.discount_factor = C.net_discount_factor
 
     #PLACEHOLDERS 
     self.x = tf.placeholder(tf.float32, [None, self.height*self.width*self.num_screens])
@@ -37,23 +38,23 @@ class DeepQNetwork:
 
     self.weights = {
       # 8x8 filter, 4 inputs 32 outputs
-      'wc1': tf.Variable(tf.random_normal([8,8,4,32])),
+      'wc1': tf.Variable(tf.random_normal([8,8,4,32], stddev = 0.2)),
       # 4x4 filter, 32 inputs 64 outputs
-      'wc2': tf.Variable(tf.random_normal([4,4,32,64])),
+      'wc2': tf.Variable(tf.random_normal([4,4,32,64], stddev = 0.2)),
       # 3x3 filter, 64 inputs 64 outputs
-      'wc3': tf.Variable(tf.random_normal([3,3,64,64])),
+      'wc3': tf.Variable(tf.random_normal([3,3,64,64], stddev = 0.2)),
       # fully connected, 7x7x64 inputs 512 outputs
-      'wd1': tf.Variable(tf.random_normal([7*7*64, 512])),
+      'wd1': tf.Variable(tf.random_normal([7*7*64, 512], stddev = 0.2)),
       # 512 inputs, 18 outputs (number of possible actions)
-      'out': tf.Variable(tf.random_normal([512, self.n_actions]))
+      'out': tf.Variable(tf.random_normal([512, self.n_actions],stddev = 0.2))
     }
 
     self.biases = {
-      'bc1': tf.Variable(tf.zeros([32])),
-      'bc2': tf.Variable(tf.zeros([64])),
-      'bc3': tf.Variable(tf.zeros([64])),
-      'bd1': tf.Variable(tf.zeros([512])),
-      'out': tf.Variable(tf.zeros([self.n_actions])),
+      'bc1': tf.Variable(tf.fill([32],.1)),
+      'bc2': tf.Variable(tf.fill([64],.1)),
+      'bc3': tf.Variable(tf.fill([64],.1)),
+      'bd1': tf.Variable(tf.fill([512],.1)),
+      'out': tf.Variable(tf.fill([self.n_actions], .1)),
     }
 
     self.conv1 = DeepQNetwork.conv2d(self.x_tensor, self.weights['wc1'], self.biases['bc1'],4)
@@ -86,7 +87,7 @@ class DeepQNetwork:
     self.save_cur_sess = save_cur_sess
     self.restore_path= restore_path
     self.runs = 0
-    self.runs_till_save = 1000000
+    self.runs_till_save = C.net_runs_till_save
     self.saver = tf.train.Saver()
     
     self.callback = None 
@@ -163,6 +164,7 @@ class DeepQNetwork:
 
     for i in range(batch_size):
       _,_,_,_,d = transitions[i]
+      #if terminal state make target the reward 
       if d:
         target[i] = r
 
@@ -173,13 +175,14 @@ class DeepQNetwork:
     
     qvalues = self.sess.run(self.out, feed_dict={self.x: states})
 
-    #save every 1000 runs 
+    #save every runs_till_save number of runs 
     if self.save_cur_sess and self.runs % self.runs_till_save == 0:
       self.saver.save(self.sess, self.save_path)
 
     self.runs += 1
 
     if self.callback:
+      #give statistics the loss_sum and qvalues 
       self.callback.on_train(loss_sum,qvalues)
 
 
@@ -229,7 +232,8 @@ class DeepQNetworkState:
   @staticmethod
   def preprocess(state):
     sg = DeepQNetworkState.convert_to_grayscale(state)
-    sg = scipy.misc.imresize(sg,(84,84),interp="nearest")
+    #Google used bilinear 
+    sg = scipy.misc.imresize(sg,(84,84),interp="bilinear")
     return sg[:,:,np.newaxis]
 
   @staticmethod
