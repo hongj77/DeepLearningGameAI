@@ -4,6 +4,7 @@ import numpy as np
 import random
 from statistics import Stats 
 import constants as C
+import matplotlib.pyplot as plt
 
 class AI:
   """AI agent that we use to interact with the game environment. 
@@ -24,8 +25,9 @@ class AI:
     self.future_discount = C.ai_qtable_future_discount
     self.num_episodes = C.ai_num_episodes
     self.num_episode_length = C.ai_qtable_num_episode_length
-    self.batch_size = C.ai_batch_size  #Google's DeepMind number 
-    self.epsilon = C.ai_epsilon 
+    self.batch_size = C.ai_batch_size #Google's DeepMind number 
+    self.epsilon = C.ai_init_epsilon 
+    self.final_epsilon = C.ai_final_epsilon
     self.network = DeepQNetwork(self.batch_size, save_cur_sess = C.net_should_save, save_path = C.net_save_path, restore_path = C.net_restore_path)
 
 
@@ -77,16 +79,22 @@ class AI:
             else:
                 action = self.network.take_action(network_state)
 
-            if epsilon > 0.02:
-                epsilon -= 1./100000
+            if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+                epsilon -= 1./10000
             
             new_state, reward, done, info = self.env.take_action(action)
             
             new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
             self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
 
+            """
+            if self.network.replay_memory_size() == 20:
+                plt.imshow((new_network_state.s0).reshape(84,84))
+                plt.show()
+            """
+
             # train cnn 
-            if self.batch_size < self.network.replay_memory_size():
+            if C.ai_replay_mem_start_size < self.network.replay_memory_size():
                 batch = self.network.sample_random_replay_memory(self.batch_size)
                 self.network.train_n_samples(batch)
 

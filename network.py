@@ -7,6 +7,7 @@ import random
 import scipy
 from scipy import misc
 import constants as C
+import matplotlib.pyplot as plt
 
 class DeepQNetwork:
   """
@@ -63,7 +64,7 @@ class DeepQNetwork:
     fc1 = tf.reshape(self.conv3, [-1, self.weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
-    self.out = tf.add(tf.matmul(fc1, self.weights['out']), self.biases['out'])
+    self.out = tf.add(tf.matmul(self.fc1, self.weights['out']), self.biases['out'])
 
     action_mask = tf.one_hot(
         self.actions_taken, depth=self.n_actions, on_value=1.0, off_value=0.0)
@@ -77,6 +78,7 @@ class DeepQNetwork:
     self.loss = tf.nn.l2_loss(difference)
     self.loss_sum = tf.reduce_sum(self.loss)
     self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+    #self.optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum = C.net_rmsprop_momentum, epsilon=C.net_rmsprop_epsilon).minimize(self.loss)
 
     # start the session and init
     self.sess = tf.Session()
@@ -106,7 +108,14 @@ class DeepQNetwork:
   def insert_tuple_into_replay_memory(self, mem_tuple):
     assert len(mem_tuple) == 5
     assert type(mem_tuple) == tuple
+
     self.replay_memory.append(mem_tuple)
+    
+    #keep memory less than total size 
+    if self.replay_memory_size() > C.ai_replay_mem_total_size:
+      self.replay_memory = self.replay_memory[100:]
+      
+    
 
   def sample_random_replay_memory(self, num_samples):
     assert num_samples <= len(self.replay_memory)
@@ -174,7 +183,6 @@ class DeepQNetwork:
     print(loss_sum)
     
     qvalues = self.sess.run(self.out, feed_dict={self.x: states})
-
     #save every runs_till_save number of runs 
     if self.save_cur_sess and self.runs % self.runs_till_save == 0:
       self.saver.save(self.sess, self.save_path)
@@ -233,7 +241,9 @@ class DeepQNetworkState:
   def preprocess(state):
     sg = DeepQNetworkState.convert_to_grayscale(state)
     #Google used bilinear 
-    sg = scipy.misc.imresize(sg,(84,84),interp="bilinear")
+    sg = scipy.misc.imresize(sg,(110,84),interp="bilinear")
+    #crop to 84 x 84 which is most of game play screen 
+    sg = sg[(110-84):,:]
     return sg[:,:,np.newaxis]
 
   @staticmethod
