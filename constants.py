@@ -35,6 +35,12 @@ plot_figure_height = 10
 plot_figure_width = 20
 plot_stats = ["average_reward","nr_games","meancost","cost_per_epoch"]
 
+API_KEY = {
+"natasha": 'sk_9Ft7yJrgT2M4k7y7Fe8A',
+"hong": 'sk_9Ft7yJrgT2M4k7y7Fe8A', 
+}
+
+
 
 
 

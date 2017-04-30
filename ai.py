@@ -20,7 +20,7 @@ class AI:
   """
 
   def __init__(self, env):
-    self.env = env
+    self.env = env # custom OpenAIGym class
     self.learning_rate = C.ai_qtable_learning_rate
     self.future_discount = C.ai_qtable_future_discount
     self.num_episodes = C.ai_num_episodes

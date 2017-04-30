@@ -3,8 +3,6 @@ from gym import wrappers
 from gym import spaces
 import constants as C
 
-API_KEY = 'sk_9Ft7yJrgT2M4k7y7Fe8A'
-
 class OpenAIGym:
   """
   Wrapper class to interact with OpenAIGym Game
@@ -16,13 +14,13 @@ class OpenAIGym:
     upload_name [int] - name of uploaded file (/tmp/game_name-version_num)
   """
 
-  def __init__(self, game_name, render, version_num = 0):
+  def __init__(self, game_name, render, player_name, version_num = 0):
     self.env = gym.make(game_name)
     self.game_name = game_name
     self.upload_name = '/tmp/' + game_name + '-' + str(version_num)
     self.env = wrappers.Monitor(self.env, self.upload_name, force=True)
-    # True if we want to see the game during playing
-    self.render = render
+    self.render = render # True if we want to see the game during playing
+    self.player = player_name # hong or natasha
 
   def take_action(self, action):
     return self.env.step(action)
@@ -45,5 +43,5 @@ class OpenAIGym:
 
   def upload_game(self):
     self.env.close()
-    gym.upload(self.upload_name, api_key= API_KEY)
+    gym.upload(self.upload_name, api_key=API_KEY[self.player])
 
