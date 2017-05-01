@@ -68,6 +68,10 @@ class DeepQNetwork:
     fc1 = tf.reshape(self.conv3, [-1, self.weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, self.weights['wd1']), self.biases['bd1'])
     self.fc1 = tf.nn.relu(fc1)
+
+    # apply dropout
+    fc1 = tf.nn.dropout(fc1, C.net_dropout)
+
     assert t_shape(self.fc1) == (None, 512)
 
     self.out = tf.add(tf.matmul(self.fc1, self.weights['out']), self.biases['out'])

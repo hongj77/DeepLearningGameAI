@@ -12,10 +12,11 @@ ai_replay_mem_total_size = 10000
 
 #Network
 net_restore_path = ""
-net_save_path = "SavedSessions/hong_test2"
+net_save_path = "SavedSessions/hong_test3"
 net_should_save = True
 
 net_learning_rate = 0.00025 #Google DeepMind used this rate 
+# net_learning_rate = 0.001
 net_rmsprop_momentum = 0.95
 net_rmsprop_epsilon = 0.01
 net_height = 84
@@ -24,13 +25,14 @@ net_num_screens = 4
 net_n_actions = 6
 net_discount_factor = .97
 net_runs_till_save = 1000000
+net_dropout = 0.75 # probability to keep units
 
 
 #Stats 
-stats_csv_path = "Stats/hong_test2.csv"
+stats_csv_path = "Stats/hong_test3.csv"
 
 #Plots
-plot_png_path = "Stats/hong_test2.png"
+plot_png_path = "Stats/hong_test3.png"
 plot_figure_height = 10
 plot_figure_width = 20
 plot_stats = ["average_reward","nr_games","meancost","cost_per_epoch", "meanq"]
