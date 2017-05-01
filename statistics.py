@@ -9,6 +9,7 @@ import csv
 import time 
 import sys
 import constants as C
+import pdb
 
 class Stats:
 
@@ -48,9 +49,10 @@ class Stats:
     self.average_reward = 0
     self.average_cost = 0
     self.meanq = 0
+    self.totalq = 0
     self.cost = 0
 
-  #call on step in game 
+  # call on step in game 
   def on_step(self, action, reward, terminal):
     self.game_rewards += reward
     self.num_steps += 1
@@ -60,13 +62,17 @@ class Stats:
       self.average_reward += float(self.game_rewards - self.average_reward) / self.num_games
       self.game_rewards = 0
 
-  #call once cnn has trained (aka one epoch)
-  def on_train(self, cost, qvalues):
+  # call once cnn has trained (aka one epoch)
+  def on_train(self, cost, qvalues, runs):
     self.cost = cost
     self.epoch += 1
     self.epoch_start_time = time.clock()
     self.average_cost += (cost - self.average_cost) / float(self.epoch)
-    self.meanq += self.meanq + (np.sum(qvalues)/ qvalues.shape[0])
+    # taking the max q-value for each state and averaging that
+    self.meanq = np.mean(qvalues)
+    # self.meanq = self.totalq / runs
+
+    print "mean q-value: {}".format(self.meanq)
     self.write()
   
   def write(self):

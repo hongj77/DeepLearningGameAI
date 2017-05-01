@@ -5,6 +5,7 @@ import random
 from statistics import Stats 
 import constants as C
 import matplotlib.pyplot as plt
+import pdb
 
 class AI:
   """AI agent that we use to interact with the game environment. 
@@ -27,15 +28,11 @@ class AI:
     self.num_episode_length = C.ai_qtable_num_episode_length
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
-    self.network = DeepQNetwork(batch_size=C.ai_batch_size, save_cur_sess = C.net_should_save, save_path = C.net_save_path, restore_path = C.net_restore_path)
-
-    self.stats = Stats(self.network,self.env)
-
-  def train(self): 
-    pass
-
-  def test(self): 
-    pass
+    self.network = DeepQNetwork(batch_size=C.ai_batch_size, 
+                                save_cur_sess = C.net_should_save, 
+                                save_path = C.net_save_path, 
+                                restore_path = C.net_restore_path)
+    self.stats = Stats(self.network, self.env)
 
   def play_qtable(self):    
     Q = np.zeros([self.env.screen_space(),self.env.total_moves()]);
@@ -62,29 +59,66 @@ class AI:
 
     for g in range(self.num_episodes):
         print "===============================starting game:", g
+
         state = self.env.reset()
+
+        assert state.shape == (210,160,3) # only for breakout right now
+
         prepared_state = DeepQNetworkState.preprocess(state)
-        network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
+
+        assert prepared_state.shape == (C.net_height, C.net_width, 1)
+
+        # setting s1 - s3 to be a black image
+        network_state = DeepQNetworkState(prepared_state, 
+            np.zeros(prepared_state.shape),
+            np.zeros(prepared_state.shape),
+            np.zeros(prepared_state.shape))
+
+        assert network_state.screens.shape == (C.net_height, C.net_width, 4)
+
         total_reward = 0
 
         # play until the AI loses or until the game completes
+        num_steps = 0
         while True:
+            num_steps += 1
             self.env.render_screen()
-            
-            #with small prob pick random action 
+
+            # with small prob pick random action 
             uniform_n = np.random.uniform(0,1)
             if uniform_n <= epsilon:
+                if num_steps % 10 == 0:
+                    print "{}<={} took random action!!".format(uniform_n, epsilon)
                 action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
+
             else:
+                # pick the action that the neural network suggests
+                if num_steps % 10 == 0:
+                    print "{}>{} took neural net action.....".format(uniform_n, epsilon)
                 action = self.network.take_action(network_state)
 
-            if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+            if epsilon > self.final_epsilon:
                 epsilon -= 1./10000
-            
+
+            ## TODO: put this back later
+            # if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+            #     epsilon -= 1./10000
+
+            assert (action < self.env.total_moves() and action >= 0)
+
             new_state, reward, done, info = self.env.take_action(action)
             
-            new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), network_state.s0, network_state.s1, network_state.s2)
-            self.network.insert_tuple_into_replay_memory((network_state,action,reward,new_network_state,done))
+            new_network_state = DeepQNetworkState(
+                DeepQNetworkState.preprocess(new_state), 
+                network_state.s0, 
+                network_state.s1, 
+                network_state.s2)
+
+            self.network.insert_tuple_into_replay_memory((network_state,
+                                                            action,
+                                                            reward,
+                                                            new_network_state,
+                                                            done))
 
             """
             if self.network.replay_memory_size() == 20:
@@ -94,6 +128,9 @@ class AI:
 
             # train cnn 
             if C.ai_replay_mem_start_size < self.network.replay_memory_size():
+                print "================TRAINING======================"
+                print "replay memory size: {}".format(self.network.replay_memory_size())
+
                 batch = self.network.sample_random_replay_memory(C.ai_batch_size)
                 self.network.train_n_samples(batch)
 

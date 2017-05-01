@@ -7,12 +7,12 @@ ai_num_episodes = 1000
 ai_batch_size = 32
 ai_init_epsilon = 1
 ai_final_epsilon = .1
-ai_replay_mem_start_size = 50000
-ai_replay_mem_total_size = 1000000
+ai_replay_mem_start_size = 100 # wait until we have this many replay memories until we start training
+ai_replay_mem_total_size = 10000
 
 #Network
 net_restore_path = ""
-net_save_path = "SavedSessions/test2"
+net_save_path = "SavedSessions/hong_test2"
 net_should_save = True
 
 net_learning_rate = 0.00025 #Google DeepMind used this rate 
@@ -27,7 +27,7 @@ net_runs_till_save = 1000000
 
 
 #Stats 
-stats_csv_path = "Stats/test2.csv"
+stats_csv_path = "Stats/hong_test2.csv"
 
 #Plots
 plot_png_path = "Stats/test2.png"
