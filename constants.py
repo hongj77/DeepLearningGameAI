@@ -30,10 +30,10 @@ net_runs_till_save = 1000000
 stats_csv_path = "Stats/hong_test2.csv"
 
 #Plots
-plot_png_path = "Stats/test2.png"
+plot_png_path = "Stats/hong_test2.png"
 plot_figure_height = 10
 plot_figure_width = 20
-plot_stats = ["average_reward","nr_games","meancost","cost_per_epoch"]
+plot_stats = ["average_reward","nr_games","meancost","cost_per_epoch", "meanq"]
 
 API_KEY = {
 "natasha": 'sk_9Ft7yJrgT2M4k7y7Fe8A',

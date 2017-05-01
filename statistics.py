@@ -70,7 +70,6 @@ class Stats:
     self.average_cost += (cost - self.average_cost) / float(self.epoch)
     # taking the max q-value for each state and averaging that
     self.meanq = np.mean(qvalues)
-    # self.meanq = self.totalq / runs
 
     print "mean q-value: {}".format(self.meanq)
     self.write()
