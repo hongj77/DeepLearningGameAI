@@ -7,6 +7,7 @@ ai_num_episodes = 1000
 ai_batch_size = 32
 ai_init_epsilon = 1
 ai_final_epsilon = .1
+ai_epsilon_anneal_rate = 1.0/1000000
 ai_replay_mem_start_size = 50000
 ai_replay_mem_total_size = 1000000
 
