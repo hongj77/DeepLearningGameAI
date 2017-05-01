@@ -31,6 +31,7 @@ class Stats:
             "average_reward",
             "total_train_steps",
             "meanq",
+            "q_per_epoch",
             "meancost",
             "cost_per_epoch"
             "total_time",
@@ -49,6 +50,7 @@ class Stats:
     self.average_cost = 0
     self.meanq = 0
     self.cost = 0
+    self.q = 0
 
   #call on step in game 
   def on_step(self, action, reward, terminal):
@@ -67,6 +69,7 @@ class Stats:
     self.epoch_start_time = time.clock()
     self.average_cost += (cost - self.average_cost) / float(self.epoch)
     self.meanq += self.meanq + (np.sum(qvalues)/ qvalues.shape[0])
+    self.q = np.sum(qvalues)
     self.write()
   
   def write(self):
@@ -83,6 +86,7 @@ class Stats:
           self.average_reward,
           self.num_steps,
           self.meanq,
+          self.q,
           np.log(self.average_cost),
           np.log(self.cost),
           total_time,
