@@ -25,11 +25,9 @@ class AI:
     self.future_discount = C.ai_qtable_future_discount
     self.num_episodes = C.ai_num_episodes
     self.num_episode_length = C.ai_qtable_num_episode_length
-    self.batch_size = C.ai_batch_size #Google's DeepMind number 
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
-    self.network = DeepQNetwork(self.batch_size, save_cur_sess = C.net_should_save, save_path = C.net_save_path, restore_path = C.net_restore_path)
-
+    self.network = DeepQNetwork(batch_size=C.ai_batch_size, save_cur_sess = C.net_should_save, save_path = C.net_save_path, restore_path = C.net_restore_path)
 
     self.stats = Stats(self.network,self.env)
 
@@ -68,8 +66,9 @@ class AI:
         prepared_state = DeepQNetworkState.preprocess(state)
         network_state = DeepQNetworkState(prepared_state,np.zeros(prepared_state.shape),np.zeros(prepared_state.shape),np.zeros(prepared_state.shape))
         total_reward = 0
+
+        # play until the AI loses or until the game completes
         while True:
-            
             self.env.render_screen()
             
             #with small prob pick random action 
@@ -95,7 +94,7 @@ class AI:
 
             # train cnn 
             if C.ai_replay_mem_start_size < self.network.replay_memory_size():
-                batch = self.network.sample_random_replay_memory(self.batch_size)
+                batch = self.network.sample_random_replay_memory(C.ai_batch_size)
                 self.network.train_n_samples(batch)
 
             state = new_state

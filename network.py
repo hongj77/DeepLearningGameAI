@@ -16,10 +16,7 @@ class DeepQNetwork:
   """
   
   def __init__(self, batch_size, save_cur_sess = False, save_path = "", restore_path = ""): 
-  # initializes the layers of the CNN
     self.replay_memory = []
-    learning_rate = C.net_learning_rate
-
     self.batch_size = batch_size
     self.height = C.net_height
     self.width = C.net_width 
@@ -77,7 +74,7 @@ class DeepQNetwork:
 
     self.loss = tf.nn.l2_loss(difference)
     self.loss_sum = tf.reduce_sum(self.loss)
-    self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+    self.optimizer = tf.train.AdamOptimizer(C.net_learning_rate).minimize(self.loss)
     #self.optimizer = tf.train.RMSPropOptimizer(learning_rate, momentum = C.net_rmsprop_momentum, epsilon=C.net_rmsprop_epsilon).minimize(self.loss)
 
     # start the session and init
@@ -218,9 +215,11 @@ class DeepQNetwork:
     result = self.sess.run(self.out, feed_dict={self.x: state})
     return np.argmax(result[0,:])
 
-class DeepQNetworkState:
 
+class DeepQNetworkState:
   """
+  Representation of a single state in our DeepQNetwork. Each state consists of four game screens in order to account for velocity. 
+
     attributes:
       screens - [h,w,4] array
       s0 - state 1 converted to grayscale 
@@ -229,8 +228,8 @@ class DeepQNetworkState:
       s3 - state 4 converted to grayscale 
   """
   
-  """s1 - s3 are OpenAIGym Boxes"""
   def __init__(self,s0,s1,s2,s3):
+    """ s0 - s3 are numpy.ndarray """
     self.s0 = s0
     self.s1 = s1
     self.s2 = s2

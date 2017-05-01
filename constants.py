@@ -13,7 +13,7 @@ ai_replay_mem_total_size = 1000000
 #Network
 net_restore_path = ""
 net_save_path = "SavedSessions/test2"
-net_should_save = True 
+net_should_save = True
 
 net_learning_rate = 0.00025 #Google DeepMind used this rate 
 net_rmsprop_momentum = 0.95
