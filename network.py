@@ -142,34 +142,6 @@ class DeepQNetwork:
 
   def replay_memory_size(self):
     return len(self.replay_memory)
-    
-  # trains the network using batches of replay memory
-  def train(self, transition):
-
-    # sample data filled with all 0's representing a Grayscale game screen
-    s, a, r, ns, d = transition 
-    target = np.zeros((1,1))
-
-    # if the game is done, then the reward is the actual target reward
-    if d:
-      target[i] = r
-    else:
-      target[0] = self.predict(ns) + r
-
-    self.sess.run(self.optimizer, feed_dict={self.x: s, self.y: target})
-    loss_sum = self.sess.run(self.loss_sum, feed_dict={self.x: states, 
-                                                       self.y: target[:,np.newaxis], 
-                                                       self.actions_taken: actions})
-    qvalue = self.sess.run(self.out, feed_dict={self.x: state})
-
-     #save every 1000 runs 
-    if self.save_cur_sess and self.runs % self.runs_till_save == 0:
-      self.saver.save(self.sess, self.save_path)
-
-    if self.callback:
-      self.callback.on_train(loss_sum,qvalue, self.runs)
-    self.runs += 1
-
 
   def train_n_samples(self, transitions):
     """

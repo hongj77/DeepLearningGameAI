@@ -32,6 +32,7 @@ class Stats:
             "average_reward",
             "total_train_steps",
             "meanq",
+            "q_per_epoch",
             "meancost",
             "cost_per_epoch"
             "total_time",
@@ -51,6 +52,7 @@ class Stats:
     self.meanq = 0
     self.totalq = 0
     self.cost = 0
+    self.q = 0
 
   # call on step in game 
   def on_step(self, action, reward, terminal):
@@ -63,15 +65,16 @@ class Stats:
       self.game_rewards = 0
 
   # call once cnn has trained (aka one epoch)
-  def on_train(self, cost, qvalues, runs):
+  def on_train(self, cost, max_qvalues, runs):
     self.cost = cost
     self.epoch += 1
     self.epoch_start_time = time.clock()
     self.average_cost += (cost - self.average_cost) / float(self.epoch)
     # taking the max q-value for each state and averaging that
-    self.meanq = np.mean(qvalues)
+    self.meanq = np.mean(max_qvalues)
 
     print "mean q-value: {}".format(self.meanq)
+
     self.write()
   
   def write(self):
@@ -88,6 +91,7 @@ class Stats:
           self.average_reward,
           self.num_steps,
           self.meanq,
+          self.q,
           np.log(self.average_cost),
           np.log(self.cost),
           total_time,

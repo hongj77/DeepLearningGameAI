@@ -97,14 +97,10 @@ class AI:
                     print "{}>{} took neural net action.....".format(uniform_n, epsilon)
                 action = self.network.take_action(network_state)
 
-            if epsilon > self.final_epsilon:
-                epsilon -= 1./10000
-
-            ## TODO: put this back later
-            # if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
-            #     epsilon -= 1./10000
-
             assert (action < self.env.total_moves() and action >= 0)
+
+            if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+                epsilon -= C.ai_epsilon_anneal_rate 
 
             new_state, reward, done, info = self.env.take_action(action)
             
