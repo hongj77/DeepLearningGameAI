@@ -11,8 +11,9 @@ if __name__=="__main__":
   render_to_screen = True
   player_name = "hong" # hong or natasha
   version_num = 0
+  training = True
 
   env = OpenAIGym(game_name, render_to_screen, player_name, version_num)
   ai = AI(env)
-  ai.play_nn()
+  ai.play_nn(False)
   env.upload_game()

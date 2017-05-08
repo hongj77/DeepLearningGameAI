@@ -54,7 +54,7 @@ class AI:
             if done:
                 break
 
-  def play_nn(self): 
+  def play_nn(self, training=True): 
     epsilon = self.epsilon 
 
     for g in range(self.num_episodes):
@@ -103,36 +103,37 @@ class AI:
                 epsilon -= C.ai_epsilon_anneal_rate 
 
             new_state, reward, done, info = self.env.take_action(action)
-            
-            new_network_state = DeepQNetworkState(
-                DeepQNetworkState.preprocess(new_state), 
-                network_state.s0, 
-                network_state.s1, 
-                network_state.s2)
 
-            self.network.insert_tuple_into_replay_memory((network_state,
-                                                            action,
-                                                            reward,
-                                                            new_network_state,
-                                                            done))
+            if training:
+                new_network_state = DeepQNetworkState(
+                    DeepQNetworkState.preprocess(new_state), 
+                    network_state.s0, 
+                    network_state.s1, 
+                    network_state.s2)
 
-            """
-            if self.network.replay_memory_size() == 20:
-                plt.imshow((new_network_state.s0).reshape(84,84))
-                plt.show()
-            """
+                self.network.insert_tuple_into_replay_memory((network_state,
+                                                                action,
+                                                                reward,
+                                                                new_network_state,
+                                                                done))
 
-            # train cnn 
-            if C.ai_replay_mem_start_size < self.network.replay_memory_size():
-                print "================TRAINING======================"
-                print "replay memory size: {}".format(self.network.replay_memory_size())
+                """
+                if self.network.replay_memory_size() == 20:
+                    plt.imshow((new_network_state.s0).reshape(84,84))
+                    plt.show()
+                """
 
-                batch = self.network.sample_random_replay_memory(C.ai_batch_size)
-                self.network.train_n_samples(batch)
+                # train cnn 
+                if C.ai_replay_mem_start_size < self.network.replay_memory_size():
+                    print "================TRAINING======================"
+                    print "replay memory size: {}".format(self.network.replay_memory_size())
 
-            state = new_state
-            network_state = new_network_state
-            self.stats.on_step(action, reward, done)
+                    batch = self.network.sample_random_replay_memory(C.ai_batch_size)
+                    self.network.train_n_samples(batch)
+
+                state = new_state
+                network_state = new_network_state
+                self.stats.on_step(action, reward, done)
 
             if done:
                 break 
