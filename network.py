@@ -12,9 +12,9 @@ import pdb
 from utils import *
 
 class DeepQNetwork:
-  def __init__(self, batch_size, save_cur_sess = False, save_path = "", restore_path = ""): 
+  def __init__(self): 
     self.replay_memory = [] # [(s,a,r,s',d)] array of 4-tuple representing replay memory 
-    self.batch_size = batch_size
+    self.batch_size = C.ai_batch_size
     self.height = C.net_height
     self.width = C.net_width 
     self.num_screens = C.net_num_screens
@@ -23,6 +23,7 @@ class DeepQNetwork:
 
     # a single sample of a game state that we hold on to for mean q-values over time
     self.validation_set = None
+    self.validation = False # set this to true when validation set is initialized
 
     # PLACEHOLDERS 
     self.x = tf.placeholder(tf.float32, [None, self.height,self.width,self.num_screens])
@@ -99,17 +100,18 @@ class DeepQNetwork:
     self.sess.run(tf.global_variables_initializer()) 
 
     #### SAVER ##### 
-    self.save_path = save_path
-    self.save_cur_sess = save_cur_sess
-    self.restore_path= restore_path
-    self.runs = 0
-    self.runs_till_save = C.net_runs_till_save
     self.saver = tf.train.Saver()
-    
+
+    self.epoch = 0
+    self.runs = 0
+    self.game_num = 0
+
     self.callback = None 
-    # restore saved session 
-    if restore_path != "":
-        self.saver.restore(self.sess, restore_path)
+
+    # restore saved session if we need to
+    if C.net_should_restore:
+      print "Restoring previous session from path: {}".format(C.net_restore_path)
+      self.saver.restore(self.sess, C.net_restore_path)
   
   
   @staticmethod
@@ -120,6 +122,10 @@ class DeepQNetwork:
     result = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='VALID')
     result = tf.nn.bias_add(result, b)
     return tf.nn.relu(result)
+
+  def print_epoch(self,line):
+    if self.runs % C.STEPS_PER_EPOCH == 0:
+      print(line)
 
   def insert_tuple_into_replay_memory(self, mem_tuple):
     """
@@ -149,6 +155,10 @@ class DeepQNetwork:
         transitions [list] - list of tuples representing the sequence (s, a, r, ns, d). s and ns are DeepQNetworkState objects. The length should always equal batch size.
     """
     assert len(transitions) == C.ai_batch_size
+
+    self.runs += 1
+    if self.runs % C.STEPS_PER_EPOCH == 0:
+      self.epoch += 1
 
     batch_size = C.ai_batch_size
     states = np.ndarray((batch_size,84,84,4))
@@ -180,25 +190,25 @@ class DeepQNetwork:
     _, loss_sum = self.sess.run([self.optimizer, self.loss_sum], feed_dict={self.x: states, 
                                                                         self.y: target, 
                                                                         self.actions_taken: actions})
-    print "loss sum: {}".format(loss_sum)
-    
     # get the q_values on validation set to get the mean q values
-    if self.validation_set == None:
+    if self.validation == False:
       self.validation_set = states
+      self.validation = True
 
-    # qvalues = self.sess.run(self.out, feed_dict={self.x: self.validation_set})
-    qvalues = self.predict(self.validation_set)
-    assert qvalues.shape == (32,)
+    max_qvalues = self.predict(self.validation_set)
+    assert max_qvalues.shape == (32,)
 
-    # save every runs_till_save number of runs 
-    if self.save_cur_sess and self.runs % self.runs_till_save == 0:
-      self.saver.save(self.sess, self.save_path)
+    # save every runs_till_save number of runs if we need to
+    if C.net_should_save and self.runs % C.STEPS_PER_EPOCH == 0:
+      path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, self.epoch)
+      print "Saving session to path: {}".format(path_with_epoch)
+      self.saver.save(self.sess, path_with_epoch)
 
-    self.runs += 1
+    self.print_epoch("epoch:{}, runs:{}, game_num:{}, loss_sum:{}".format(self.epoch, self.runs, self.game_num, loss_sum))
 
     if self.callback:
       # give statistics the loss_sum and qvalues 
-      self.callback.on_train(loss_sum, qvalues, self.runs)
+      self.callback.on_train(loss_sum, max_qvalues, self.runs)
 
 
   def predict(self,state):

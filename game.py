@@ -15,7 +15,7 @@ class OpenAIGym:
     upload_name [int] - name of uploaded file (/tmp/game_name-version_num)
   """
 
-  def __init__(self, game_name, render, player_name, version_num = 0):
+  def __init__(self, game_name, render, player_name, version_num):
     self.env = gym.make(game_name)
     self.game_name = game_name
     self.upload_name = '/tmp/' + game_name + '-' + str(version_num)

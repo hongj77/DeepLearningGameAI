@@ -73,7 +73,7 @@ class Stats:
     # taking the max q-value for each state and averaging that
     self.meanq = np.mean(max_qvalues)
 
-    print "mean q-value: {}".format(self.meanq)
+    # print "mean q-value: {}".format(self.meanq)
 
     self.write()
   

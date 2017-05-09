@@ -28,10 +28,7 @@ class AI:
     self.num_episode_length = C.ai_qtable_num_episode_length
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
-    self.network = DeepQNetwork(batch_size=C.ai_batch_size, 
-                                save_cur_sess = C.net_should_save, 
-                                save_path = C.net_save_path, 
-                                restore_path = C.net_restore_path)
+    self.network = DeepQNetwork()
     self.stats = Stats(self.network, self.env)
 
   def play_qtable(self):    
@@ -54,11 +51,13 @@ class AI:
             if done:
                 break
 
-  def play_nn(self, training=True): 
+  def play_nn(self, training): 
     epsilon = self.epsilon 
-
+    num_steps = 0
     for g in range(self.num_episodes):
-        print "===============================starting game:", g
+        print "=============================== starting game:", g
+        print "steps:{}".format(num_steps)
+        self.network.game_num = g
 
         state = self.env.reset()
 
@@ -79,7 +78,7 @@ class AI:
         total_reward = 0
 
         # play until the AI loses or until the game completes
-        num_steps = 0
+        
         while True:
             num_steps += 1
             self.env.render_screen()
@@ -87,14 +86,14 @@ class AI:
             # with small prob pick random action 
             uniform_n = np.random.uniform(0,1)
             if uniform_n <= epsilon:
-                if num_steps % 10 == 0:
-                    print "{}<={} took random action!!".format(uniform_n, epsilon)
+                # if num_steps % 10 == 0:
+                    # print "{}<={} took random action!!".format(uniform_n, epsilon)
                 action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
 
             else:
                 # pick the action that the neural network suggests
-                if num_steps % 10 == 0:
-                    print "{}>{} took neural net action.....".format(uniform_n, epsilon)
+                # if num_steps % 10 == 0:
+                    # print "{}>{} took neural net action.....".format(uniform_n, epsilon)
                 action = self.network.take_action(network_state)
 
             assert (action < self.env.total_moves() and action >= 0)
@@ -125,9 +124,7 @@ class AI:
 
                 # train cnn 
                 if C.ai_replay_mem_start_size < self.network.replay_memory_size():
-                    print "================TRAINING======================"
-                    print "replay memory size: {}".format(self.network.replay_memory_size())
-
+                    # print "replay memory size: {}".format(self.network.replay_memory_size())
                     batch = self.network.sample_random_replay_memory(C.ai_batch_size)
                     self.network.train_n_samples(batch)
 
@@ -136,6 +133,6 @@ class AI:
                 self.stats.on_step(action, reward, done)
 
             if done:
-                break 
+                break
 
 
