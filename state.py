@@ -1,3 +1,17 @@
+import numpy as np
+import os
+import numpy as np
+import tensorflow as tf
+from tensorflow import contrib
+import random
+import scipy
+from scipy import misc
+import constants as C
+import matplotlib.pyplot as plt
+import pdb
+from utils import *
+from state import *
+
 class DeepQNetworkState:
   """
   Representation of a single state in our DeepQNetwork. Each state consists of four game screens in order to account for velocity. 
