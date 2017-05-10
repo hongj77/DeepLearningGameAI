@@ -18,7 +18,7 @@ if __name__=="__main__":
 
   if training:
     print "="*10
-    print "Training AI for {} games".format(C.ai_num_episodes)
+    print "Training AI for {} epochs".format(C.RUN_TILL_EPOCH)
     print "="*10
   else:
     print "="*10
@@ -26,4 +26,8 @@ if __name__=="__main__":
     print "="*10
 
   ai.play_nn(training)
+
+  print "="*10
+  print "Uploading game to OpenAI"
+  print "="*10  
   env.upload_game()

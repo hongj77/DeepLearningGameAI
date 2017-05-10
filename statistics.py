@@ -66,12 +66,13 @@ class Stats:
 
   # call every batch update
   def on_train(self, loss, max_qvalues, runs):
+    # this is because this method is called once every 4 steps....
     self.average_cost += float(loss - self.average_cost) / float(runs)
     mean_val = np.mean(max_qvalues)
     self.average_q += float(mean_val - self.average_q) / float(runs)
   
-  def write(self):
-    self.epoch += 1
+  def write(self, epoch):
+    self.epoch = epoch
     print "Plotted Statistics at Epoch: {}".format(self.epoch)
 
     if self.csv_path != "":

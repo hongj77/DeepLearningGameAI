@@ -1,5 +1,6 @@
 # General
-STEPS_PER_EPOCH = 500 # temp
+STEPS_PER_EPOCH = 1000 # temp
+RUN_TILL_EPOCH = 10 # how many to run
 SESSION_NAME = "hong_mac"
 
 # AI QTable
@@ -8,12 +9,11 @@ ai_qtable_future_discount = .99
 ai_qtable_num_episode_length = 100
 
 # AI Network
-ai_num_episodes = 1000000
 ai_batch_size = 32
 ai_init_epsilon = 1 # google 
 ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
-ai_replay_mem_start_size = 1000 # temp
+ai_replay_mem_start_size = 2000 # temp
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
 ai_replay_mem_total_size = 100000 # maybe try 100k instead
 

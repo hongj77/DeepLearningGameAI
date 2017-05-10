@@ -54,5 +54,5 @@ class OpenAIGym:
 
   def upload_game(self):
     self.env.close()
-    gym.upload(self.upload_name, api_key=API_KEY[self.player])
+    gym.upload(self.upload_name, api_key=C.API_KEY[self.player])
 

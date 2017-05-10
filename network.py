@@ -1,5 +1,4 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import numpy as np
 import tensorflow as tf
 from tensorflow import contrib
@@ -10,6 +9,7 @@ import constants as C
 import matplotlib.pyplot as plt
 import pdb
 from utils import *
+from state import *
 
 class DeepQNetwork:
   def __init__(self): 
@@ -102,8 +102,9 @@ class DeepQNetwork:
     #### SAVER ##### 
     self.saver = tf.train.Saver()
 
-    self.epoch = 0
+    self.epoch = 1
     self.runs = 1
+    self.trained_called = 0 # how many times have we trained?
     self.game_num = 0
 
     self.callback = None 
@@ -112,7 +113,6 @@ class DeepQNetwork:
     if C.net_should_restore:
       print "Restoring previous session from path: {}".format(C.net_restore_path)
       self.saver.restore(self.sess, C.net_restore_path)
-  
   
   @staticmethod
   def conv2d(x, W, b, strides):
@@ -149,16 +149,47 @@ class DeepQNetwork:
   def replay_memory_size(self):
     return len(self.replay_memory)
 
+  def predict(self,state):
+    """
+      attributes:
+        state - array of size (batch_size,84,84,4)
+      returns:
+        np array of size (batch_size,) 
+        represents of the max Q-value for each example in the batch
+    """
+    assert state.shape == (32, 84, 84, 4)
+
+    result = self.sess.run(self.out, feed_dict={self.x: state})
+    assert result.shape == (32,6)
+
+    ret = self.discount_factor * np.amax(result, axis=1)
+    assert ret.shape == (32,)
+
+    return ret
+
+  def take_action(self,state):
+    """
+      attributes:
+        state - DeepQNetworkState object
+      returns:
+        np array of a single number
+        a single action number with the highest Q-value
+    """
+    assert state.screens.shape == (84,84,4)
+    state = state.screens.reshape(1, 84, 84, 4)
+
+    result = self.sess.run(self.out, feed_dict={self.x: state})
+    assert result.shape == (1,6)
+
+    return np.argmax(result[0,:]) # the first index is the batch
+
   def train_n_samples(self, transitions):
     """
       Params:
         transitions [list] - list of tuples representing the sequence (s, a, r, ns, d). s and ns are DeepQNetworkState objects. The length should always equal batch size.
     """
     assert len(transitions) == C.ai_batch_size
-
-    self.runs += 1
-    if self.runs % C.STEPS_PER_EPOCH == 0:
-      self.epoch += 1
+    self.trained_called += 1
 
     batch_size = C.ai_batch_size
     states = np.ndarray((batch_size,84,84,4))
@@ -198,104 +229,14 @@ class DeepQNetwork:
     max_qvalues = self.predict(self.validation_set)
     assert max_qvalues.shape == (32,)
 
-    # save every runs_till_save number of runs if we need to
-    if C.net_should_save and self.runs % C.STEPS_PER_EPOCH == 0:
-      path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, self.epoch)
-      print "Saving session to path: {}".format(path_with_epoch)
-      self.saver.save(self.sess, path_with_epoch)
-      print "epoch:{}, runs:{}, game_num:{}, loss_sum:{}".format(self.epoch, self.runs, self.game_num, loss_sum)
-
     # give statistics the loss_sum and qvalues 
     if self.callback:
-      self.callback.on_train(loss_sum, max_qvalues, self.runs)
+      self.callback.on_train(loss_sum, max_qvalues, self.trained_called)
 
-
-  def predict(self,state):
-    """
-      attributes:
-        state - array of size (batch_size,84,84,4)
-      returns:
-        np array of size (batch_size,) 
-        represents of the max Q-value for each example in the batch
-    """
-    assert state.shape == (32, 84, 84, 4)
-
-    result = self.sess.run(self.out, feed_dict={self.x: state})
-    assert result.shape == (32,6)
-
-    ret = self.discount_factor * np.amax(result, axis=1)
-    assert ret.shape == (32,)
-
-    return ret
-
-  def take_action(self,state):
-    """
-      attributes:
-        state - DeepQNetworkState object
-      returns:
-        np array of a single number
-        a single action number with the highest Q-value
-    """
-    assert state.screens.shape == (84,84,4)
-    state = state.screens.reshape(1, 84, 84, 4)
-
-    result = self.sess.run(self.out, feed_dict={self.x: state})
-    assert result.shape == (1,6)
-
-    return np.argmax(result[0,:]) # the first index is the batch
-
-
-class DeepQNetworkState:
-  """
-  Representation of a single state in our DeepQNetwork. Each state consists of four game screens in order to account for velocity. 
-
-    attributes:
-      screens - [h,w,4] array representing the last 4 game screens
-      s0 - state 1 converted to grayscale 
-      s1 - state 2 converted to grayscale 
-      s2 - state 3 converted to grayscale 
-      s3 - state 4 converted to grayscale 
-
-      s0 - s3 are numpy.ndarray of shape (C.net_height, C.net_width, 1) 
-  """
-  
-  def __init__(self,s0,s1,s2,s3):
-    self.s0 = s0
-    self.s1 = s1
-    self.s2 = s2
-    self.s3 = s3
-    self.screens = np.concatenate((s0,s1,s2,s3), axis=2)
-
-  @staticmethod
-  def preprocess(state):
-    """
-    Params:
-      state - takes in (h,w,3) 
-
-    Returns:
-      preprocessed state that resizes the image and grayscales it
-      returns an image with shape (C.net_height, C.net_width, 1)
-    """
-    sg = DeepQNetworkState.convert_to_grayscale(state)
-    #Google used bilinear 
-    sg = scipy.misc.imresize(sg,(110,84),interp="bilinear")
-
-    #crop to 84 x 84 which is most of game play screen 
-    sg = sg[(110-84):,:]
-
-    assert sg.shape == (C.net_height, C.net_width)
-    return sg[:,:,np.newaxis]
-
-  @staticmethod
-  def convert_to_grayscale(image):
-    """
-    Params:
-      state - shape (h,w,3) the 3 represents r,g,b
-    Returns:
-      grayscaled image of (h,w,3)
-    """
-    grayed = np.dot(image[...,:3], [0.299, 0.587, 0.114])
-    return grayed
-
+  def save(self):
+    path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, self.epoch)
+    print "Saving session to path: {}".format(path_with_epoch)
+    self.saver.save(self.sess, path_with_epoch)
+    print "epoch:{}, runs:{}, game_num:{}".format(self.epoch, self.runs, self.game_num)
 
 
