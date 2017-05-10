@@ -71,7 +71,7 @@ class DeepQNetwork:
     self.fc1 = tf.nn.relu(fc1)
 
     # apply dropout
-    fc1 = tf.nn.dropout(fc1, C.net_dropout)
+    # fc1 = tf.nn.dropout(fc1, C.net_dropout)
 
     assert t_shape(self.fc1) == (None, 512)
 
@@ -168,10 +168,10 @@ class DeepQNetwork:
 
     for i in range(batch_size):
       s, a, r, ns, _ = transitions[i]
-      s = s.screens[:,:,:] # may be unneccessary?
-      ns = ns.screens[:,:,:]
-      states[i,:,:,:] = s
-      new_states[i,:,:,:] = ns 
+      s_screens = s.screens[:,:,:]
+      ns_screens = ns.screens[:,:,:]
+      states[i,:,:,:] = s_screens
+      new_states[i,:,:,:] = ns_screens
       rewards[i] = r
       actions[i] = a
 
@@ -181,15 +181,15 @@ class DeepQNetwork:
     assert target.shape == (32, 1)
 
     for i in range(batch_size):
-      _,_,_,_,d = transitions[i]
+      s,a,r,ns,d = transitions[i]
       # if terminal state make target the reward 
       if d:
         target[i] = r
 
     # train network with gradient descent and get loss
     _, loss_sum = self.sess.run([self.optimizer, self.loss_sum], feed_dict={self.x: states, 
-                                                                        self.y: target, 
-                                                                        self.actions_taken: actions})
+                                                                            self.y: target, 
+                                                                            self.actions_taken: actions})
     # get the q_values on validation set to get the mean q values
     if self.validation == False:
       self.validation_set = states
@@ -203,11 +203,10 @@ class DeepQNetwork:
       path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, self.epoch)
       print "Saving session to path: {}".format(path_with_epoch)
       self.saver.save(self.sess, path_with_epoch)
+      print "epoch:{}, runs:{}, game_num:{}, loss_sum:{}".format(self.epoch, self.runs, self.game_num, loss_sum)
 
-    self.print_epoch("epoch:{}, runs:{}, game_num:{}, loss_sum:{}".format(self.epoch, self.runs, self.game_num, loss_sum))
-
+    # give statistics the loss_sum and qvalues 
     if self.callback:
-      # give statistics the loss_sum and qvalues 
       self.callback.on_train(loss_sum, max_qvalues, self.runs)
 
 

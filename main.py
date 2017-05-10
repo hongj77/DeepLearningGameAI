@@ -17,9 +17,13 @@ if __name__=="__main__":
   ai = AI(env)
 
   if training:
-    print "Training AI!"
+    print "="*10
+    print "Training AI for {} games".format(C.ai_num_episodes)
+    print "="*10
   else:
+    print "="*10
     print "Testing AI with file: {}".format(C.net_restore_path)
+    print "="*10
 
   ai.play_nn(training)
   env.upload_game()

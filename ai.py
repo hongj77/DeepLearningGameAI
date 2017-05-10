@@ -7,6 +7,8 @@ import constants as C
 import matplotlib.pyplot as plt
 import pdb
 
+
+
 class AI:
   """AI agent that we use to interact with the game environment. 
 
@@ -54,90 +56,74 @@ class AI:
   def play_nn(self, training): 
     epsilon = self.epsilon 
     num_steps = 0
+
     for g in range(self.num_episodes):
-        print "=============================== starting game:", g
-        print "steps:{}".format(num_steps)
-        self.network.game_num = g
+      print "Starting game: {}, total_steps: {}".format(g, num_steps)
+      self.network.game_num = g
 
-        state = self.env.reset()
+      state = self.env.reset()
 
-        assert state.shape == (210,160,3) # only for breakout right now
+      assert state.shape == (210,160,3) # only for breakout right now
 
-        prepared_state = DeepQNetworkState.preprocess(state)
+      prepared_state = DeepQNetworkState.preprocess(state)
 
-        assert prepared_state.shape == (C.net_height, C.net_width, 1)
+      assert prepared_state.shape == (C.net_height, C.net_width, 1)
 
-        # setting s1 - s3 to be a black image
-        network_state = DeepQNetworkState(prepared_state, 
-            np.zeros(prepared_state.shape),
-            np.zeros(prepared_state.shape),
-            np.zeros(prepared_state.shape))
+      # setting s1 - s3 to be a black image
+      network_state = DeepQNetworkState(prepared_state, 
+                                        np.zeros(prepared_state.shape),
+                                        np.zeros(prepared_state.shape),
+                                        np.zeros(prepared_state.shape))
 
-        assert network_state.screens.shape == (C.net_height, C.net_width, 4)
+      assert network_state.screens.shape == (C.net_height, C.net_width, 4)
 
-        total_reward = 0
+      # play until the AI loses or until the game completes
+      while True:
+        self.env.render_screen()
+        num_steps += 1
 
-        # play until the AI loses or until the game completes
-        
-        while True:
-            num_steps += 1
+        # taking a step
+        uniform_n = random.random()
+        if uniform_n < epsilon:
+          action = random.randrange(self.env.total_moves())
+        else:
+          action = self.network.take_action(network_state)
 
-            # plot every epoch according to the "runs of the the NN"
-            if self.network.runs % C.STEPS_PER_EPOCH == 0:
-                self.stats.write()
+        # sanity check
+        assert (action < self.env.total_moves() and action >= 0)
 
-            self.env.render_screen()
+        if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+          epsilon -= C.ai_epsilon_anneal_rate 
 
-            # with small prob pick random action 
-            uniform_n = np.random.uniform(0,1)
-            if uniform_n <= epsilon:
-                # if num_steps % 10 == 0:
-                    # print "{}<={} took random action!!".format(uniform_n, epsilon)
-                action = int(np.floor(np.random.uniform(0,self.env.total_moves())))
+        new_state, reward, done, info = self.env.take_action(action)
 
-            else:
-                # pick the action that the neural network suggests
-                # if num_steps % 10 == 0:
-                    # print "{}>{} took neural net action.....".format(uniform_n, epsilon)
-                action = self.network.take_action(network_state)
+        if training:
+          new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), 
+                                                network_state.s0, 
+                                                network_state.s1, 
+                                                network_state.s2)
 
-            assert (action < self.env.total_moves() and action >= 0)
+          # (n,a,r,ns,d) like in the paper
+          memory = (network_state, action, reward, new_network_state, done)
+          self.network.insert_tuple_into_replay_memory(memory)
 
-            if epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
-                epsilon -= C.ai_epsilon_anneal_rate 
+          # train cnn 
+          if C.ai_replay_mem_start_size < self.network.replay_memory_size():
+            # only train every x number of runs
+            if num_steps % C.net_train_rate == 0:
+              batch = self.network.sample_random_replay_memory(C.ai_batch_size)
+              self.network.train_n_samples(batch)
 
-            new_state, reward, done, info = self.env.take_action(action)
+          # set variables for next loop
+          network_state = new_network_state
+          self.stats.on_step(action, reward, done)
 
-            if training:
-                new_network_state = DeepQNetworkState(
-                    DeepQNetworkState.preprocess(new_state), 
-                    network_state.s0, 
-                    network_state.s1, 
-                    network_state.s2)
+        # plot every epoch according to the "runs of the the NN"
+        if self.network.runs % C.STEPS_PER_EPOCH == 0:
+          self.stats.write()
 
-                self.network.insert_tuple_into_replay_memory((network_state,
-                                                                action,
-                                                                reward,
-                                                                new_network_state,
-                                                                done))
-
-                """
-                if self.network.replay_memory_size() == 20:
-                    plt.imshow((new_network_state.s0).reshape(84,84))
-                    plt.show()
-                """
-
-                # train cnn 
-                if C.ai_replay_mem_start_size < self.network.replay_memory_size():
-                    # print "replay memory size: {}".format(self.network.replay_memory_size())
-                    batch = self.network.sample_random_replay_memory(C.ai_batch_size)
-                    self.network.train_n_samples(batch)
-
-                state = new_state
-                network_state = new_network_state
-                self.stats.on_step(action, reward, done)
-
-            if done:
-                break
+        # go to the next game
+        if done:
+          break
 
 
