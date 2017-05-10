@@ -55,12 +55,12 @@ class Stats:
   def on_step(self, action, reward, terminal):
     self.game_rewards += reward
     self.num_steps += 1
-    self.epoch_max_reward = max(self.epoch_max_reward, reward)
-    self.epoch_min_reward = min(self.epoch_min_reward, reward)
 
     if terminal:
       self.num_games_total += 1
       self.num_games_per_epoch += 1
+      self.epoch_max_reward = max(self.epoch_max_reward, self.game_rewards)
+      self.epoch_min_reward = min(self.epoch_min_reward, self.game_rewards)
       self.average_reward_per_game += float(self.game_rewards - self.average_reward_per_game) / self.num_games_total
       self.game_rewards = 0 # reset current running reward
 
@@ -69,8 +69,6 @@ class Stats:
     self.average_cost += float(loss - self.average_cost) / float(runs)
     mean_val = np.mean(max_qvalues)
     self.average_q += float(mean_val - self.average_q) / float(runs)
-    # print "mean_val: {}".format(mean_val)
-    # print "average_q: {}".format(self.average_q)
   
   def write(self):
     self.epoch += 1
