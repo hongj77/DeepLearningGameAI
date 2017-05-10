@@ -1,6 +1,6 @@
 # General
-STEPS_PER_EPOCH = 100 # google rate
-SESSION_NAME = "hong_save_test"
+STEPS_PER_EPOCH = 500 # 10k
+SESSION_NAME = "hong_mac"
 
 #AI
 ai_qtable_learning_rate = .85
@@ -12,14 +12,14 @@ ai_init_epsilon = 1
 ai_final_epsilon = .1
 # ai_epsilon_anneal_rate = 1.0/1000000
 ai_epsilon_anneal_rate = 1.0/100000 # let's try this for now?
-ai_replay_mem_start_size = 50
+ai_replay_mem_start_size = 1000
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
 ai_replay_mem_total_size = 100000 # maybe try 100k instead
 
 #Network
 net_should_save = True
 net_should_restore = False # if this is on, then we go to test mode
-RESTORE_EPOCH = 6 # change this whenever you need to restore a specific epoch
+RESTORE_EPOCH = 1 # change this whenever you need to restore a specific epoch
 net_restore_path = "SavedSessions/{}-{}.ckpt".format(SESSION_NAME, RESTORE_EPOCH)
 net_save_path = "SavedSessions/{}".format(SESSION_NAME) # path to save the session
 net_runs_till_save = STEPS_PER_EPOCH # save every epoch

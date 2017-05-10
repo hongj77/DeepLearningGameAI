@@ -48,7 +48,7 @@ class Stats:
 
     # these are on a per epoch basis
     self.epoch_max_reward = 0
-    self.epoch_min_reward = -1
+    self.epoch_min_reward = 999999
     self.num_games_per_epoch = 0
 
   # call on step in game 
@@ -89,7 +89,7 @@ class Stats:
 
     # reset all stats that are per epoch only
     self.epoch_max_reward = 0
-    self.epoch_min_reward = -1
+    self.epoch_min_reward = 999999
     self.num_games_per_epoch = 0
     
 
