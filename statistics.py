@@ -68,12 +68,15 @@ class Stats:
   def on_train(self, loss, max_qvalues, runs):
     # this is because this method is called once every 4 steps....
     self.average_cost += float(loss - self.average_cost) / float(runs)
-    mean_val = np.mean(max_qvalues)
-    self.average_q += float(mean_val - self.average_q) / float(runs)
+    # mean_val = np.mean(max_qvalues)
+    # self.average_q += float(mean_val - self.average_q) / float(runs)
   
   def write(self, epoch):
     self.epoch = epoch
     print "Plotted Statistics at Epoch: {}".format(self.epoch)
+    
+    max_qvalues = self.network.predict(self.network.validation_set)
+    self.average_q = max_qvalues
 
     if self.csv_path != "":
       self.csv_writer.writerow((

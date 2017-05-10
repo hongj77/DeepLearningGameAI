@@ -87,9 +87,10 @@ class DeepQNetwork:
     assert t_shape(targets) == (None, 6)
 
     # gets the difference between target and prediction. Everything else is 0
-    difference = action_mask * (self.out - targets)
-    self.test = difference 
+    difference = action_mask * (targets - self.out)
+    difference = tf.clip_by_value(difference, -1, 1, name='clipped_delta')
 
+    self.test = difference 
     self.loss = tf.nn.l2_loss(difference)
     self.loss_sum = tf.reduce_sum(self.loss)
     self.optimizer = tf.train.AdamOptimizer(C.net_learning_rate).minimize(self.loss)
@@ -199,10 +200,8 @@ class DeepQNetwork:
 
     for i in range(batch_size):
       s, a, r, ns, _ = transitions[i]
-      s_screens = s.screens[:,:,:]
-      ns_screens = ns.screens[:,:,:]
-      states[i,:,:,:] = s_screens
-      new_states[i,:,:,:] = ns_screens
+      states[i,:,:,:] = s.screens[:,:,:]
+      new_states[i,:,:,:] = ns.screens[:,:,:]
       rewards[i] = r
       actions[i] = a
 
@@ -225,9 +224,6 @@ class DeepQNetwork:
     if self.validation == False:
       self.validation_set = states
       self.validation = True
-
-    max_qvalues = self.predict(self.validation_set)
-    assert max_qvalues.shape == (32,)
 
     # give statistics the loss_sum and qvalues 
     if self.callback:
