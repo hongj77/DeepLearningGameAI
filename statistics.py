@@ -12,13 +12,14 @@ import constants as C
 import pdb
 
 class Stats:
-
+  """
+  Keey running statistics on everything we want to plot.
+  These statistics will only get plotted every C.STEPS_PER_PLOT
+  """
   def __init__(self, network, game):
     self.network = network 
     self.game = game 
-
     self.network.callback = self
-
     self.csv_path = C.stats_csv_path 
 
     if self.csv_path != "":
@@ -28,77 +29,70 @@ class Stats:
       self.csv_writer.writerow((
             "epoch",
             "steps",
-            "nr_games",
-            "average_reward",
-            "total_train_steps",
-            "meanq",
-            "q_per_epoch",
-            "meancost",
-            "cost_per_epoch"
-            "total_time",
-            "epoch_time",
-            "steps_per_second"
+            "average_reward_per_game",
+            "average_q",
+            "average_cost",
+            "num_games_per_epoch",
+            "epoch_max_reward",
+            "epoch_min_reward",
           ))
       self.csv_file.flush()
 
-    self.start_time = time.clock()
-    self.num_games = 0
+    self.num_games_total = 0
     self.epoch = 0
-    self.epoch_start_time = time.clock()
     self.num_steps = 0
-    self.game_rewards = 0
-    self.average_reward = 0
-    self.average_cost = 0
-    self.meanq = 0
-    self.totalq = 0
-    self.cost = 0
-    self.q = 0
+    self.game_rewards = 0 # running tally of rewards for the current game
+    self.average_reward_per_game = 0 # running average
+    self.average_cost = 0 # running average
+    self.average_q = 0 # running average
+
+    # these are on a per epoch basis
+    self.epoch_max_reward = -1
+    self.epoch_min_reward = 500000000
+    self.num_games_per_epoch = 0
 
   # call on step in game 
   def on_step(self, action, reward, terminal):
     self.game_rewards += reward
     self.num_steps += 1
+    self.epoch_max_reward = max(self.epoch_max_reward, reward)
+    self.epoch_min_reward = min(self.epoch_min_reward, reward)
 
     if terminal:
-      self.num_games += 1
-      self.average_reward += float(self.game_rewards - self.average_reward) / self.num_games
-      self.game_rewards = 0
+      self.num_games_total += 1
+      self.num_games_per_epoch += 1
+      self.average_reward_per_game += float(self.game_rewards - self.average_reward_per_game) / self.num_games_total
+      self.game_rewards = 0 # reset current running reward
 
-  # call once cnn has trained (aka one epoch)
-  def on_train(self, cost, max_qvalues, runs):
-    self.cost = cost
-    self.epoch += 1
-    self.epoch_start_time = time.clock()
-    self.average_cost += (cost - self.average_cost) / float(self.epoch)
-    # taking the max q-value for each state and averaging that
-    self.meanq = np.mean(max_qvalues)
-
-    # print "mean q-value: {}".format(self.meanq)
-
-    self.write()
+  # call every batch update
+  def on_train(self, loss, max_qvalues, runs):
+    self.average_cost += float(loss - self.average_cost) / float(runs)
+    mean_val = np.mean(max_qvalues)
+    self.average_q += float(mean_val - self.average_q) / float(runs)
+    # print "mean_val: {}".format(mean_val)
+    # print "average_q: {}".format(self.average_q)
   
   def write(self):
-    current_time = time.clock()
-    total_time = current_time - self.start_time
-    epoch_time = current_time - self.epoch_start_time
-    steps_per_second = self.num_steps / epoch_time
+    self.epoch += 1
+    print "Plotted Statistics at Epoch: {}".format(self.epoch)
 
     if self.csv_path != "":
       self.csv_writer.writerow((
           self.epoch,
           self.num_steps,
-          self.num_games,
-          self.average_reward,
-          self.num_steps,
-          self.meanq,
-          self.q,
-          np.log(self.average_cost),
-          np.log(self.cost),
-          total_time,
-          epoch_time,
-          steps_per_second
+          self.average_reward_per_game,
+          self.average_q,
+          self.average_cost,
+          self.num_games_per_epoch,
+          self.epoch_max_reward,
+          self.epoch_min_reward,
         ))
       self.csv_file.flush()
+
+    # reset all stats that are per epoch only
+    self.episode_max = -1
+    self.episode_min = 500000000
+    self.num_games_per_epoch = 0
     
 
   def close(self):

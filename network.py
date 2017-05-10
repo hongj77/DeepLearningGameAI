@@ -103,7 +103,7 @@ class DeepQNetwork:
     self.saver = tf.train.Saver()
 
     self.epoch = 0
-    self.runs = 0
+    self.runs = 1
     self.game_num = 0
 
     self.callback = None 

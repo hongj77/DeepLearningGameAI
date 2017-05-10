@@ -1,18 +1,18 @@
 # General
-STEPS_PER_EPOCH = 50000 # google rate
+STEPS_PER_EPOCH = 100 # google rate
 SESSION_NAME = "hong_save_test"
 
 #AI
 ai_qtable_learning_rate = .85
 ai_qtable_future_discount = .99
 ai_qtable_num_episode_length = 100
-ai_num_episodes = 1000
+ai_num_episodes = 1000000
 ai_batch_size = 32
 ai_init_epsilon = 1
 ai_final_epsilon = .1
-ai_replay_mem_total_size = 10000
-ai_epsilon_anneal_rate = 1.0/1000000
-ai_replay_mem_start_size = 50000
+# ai_epsilon_anneal_rate = 1.0/1000000
+ai_epsilon_anneal_rate = 1.0/100000 # let's try this for now?
+ai_replay_mem_start_size = 50
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
 ai_replay_mem_total_size = 100000 # maybe try 100k instead
 
@@ -39,9 +39,6 @@ stats_csv_path = "Stats/{}.csv".format(SESSION_NAME)
 
 #Plots
 plot_png_path = "Stats/{}.png".format(SESSION_NAME)
-plot_figure_height = 10
-plot_figure_width = 20
-plot_stats = ["average_reward","nr_games","meancost","cost_per_epoch", "meanq"]
 
 API_KEY = {
 "natasha": 'sk_9Ft7yJrgT2M4k7y7Fe8A',

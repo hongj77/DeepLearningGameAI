@@ -81,6 +81,11 @@ class AI:
         
         while True:
             num_steps += 1
+
+            # plot every epoch according to the "runs of the the NN"
+            if self.network.runs % C.STEPS_PER_EPOCH == 0:
+                self.stats.write()
+
             self.env.render_screen()
 
             # with small prob pick random action 
