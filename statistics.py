@@ -65,18 +65,19 @@ class Stats:
       self.game_rewards = 0 # reset current running reward
 
   # call every batch update
-  def on_train(self, loss, max_qvalues, runs):
-    # this is because this method is called once every 4 steps....
+  def on_train(self, loss, runs):
     self.average_cost += float(loss - self.average_cost) / float(runs)
-    # mean_val = np.mean(max_qvalues)
-    # self.average_q += float(mean_val - self.average_q) / float(runs)
   
   def write(self, epoch):
     self.epoch = epoch
     print "Plotted Statistics at Epoch: {}".format(self.epoch)
     
-    max_qvalues = self.network.predict(self.network.validation_set)
-    self.average_q = max_qvalues
+    if self.network.validation:
+      # validation set was initialized
+      max_qvalues = self.network.predict(self.network.validation_set)
+      self.average_q = np.mean(max_qvalues)
+    else:
+      self.average_q = 0
 
     if self.csv_path != "":
       self.csv_writer.writerow((
@@ -95,6 +96,7 @@ class Stats:
     self.epoch_max_reward = 0
     self.epoch_min_reward = 999999
     self.num_games_per_epoch = 0
+    self.average_cost = 0
     
 
   def close(self):

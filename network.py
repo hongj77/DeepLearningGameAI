@@ -227,7 +227,7 @@ class DeepQNetwork:
 
     # give statistics the loss_sum and qvalues 
     if self.callback:
-      self.callback.on_train(loss_sum, max_qvalues, self.trained_called)
+      self.callback.on_train(loss_sum, self.trained_called)
 
   def save(self):
     path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, self.epoch)
