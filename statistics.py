@@ -97,6 +97,7 @@ class Stats:
     self.epoch_min_reward = 999999
     self.num_games_per_epoch = 0
     self.average_cost = 0
+    self.network.trained_called = 0
     
 
   def close(self):

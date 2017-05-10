@@ -88,7 +88,6 @@ class DeepQNetwork:
 
     # gets the difference between target and prediction. Everything else is 0
     difference = action_mask * (targets - self.out)
-    difference = tf.clip_by_value(difference, -1, 1, name='clipped_delta')
 
     self.test = difference 
     self.loss = tf.nn.l2_loss(difference)
