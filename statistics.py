@@ -47,8 +47,8 @@ class Stats:
     self.average_q = 0 # running average
 
     # these are on a per epoch basis
-    self.epoch_max_reward = -1
-    self.epoch_min_reward = 500000000
+    self.epoch_max_reward = 0
+    self.epoch_min_reward = 0
     self.num_games_per_epoch = 0
 
   # call on step in game 
@@ -88,8 +88,8 @@ class Stats:
       self.csv_file.flush()
 
     # reset all stats that are per epoch only
-    self.episode_max = -1
-    self.episode_min = 500000000
+    self.episode_max = 0
+    self.episode_min = 0
     self.num_games_per_epoch = 0
     
 
