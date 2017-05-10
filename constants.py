@@ -14,8 +14,7 @@ ai_init_epsilon = 1 # google
 ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
 ai_replay_mem_start_size = 50000 # temp
-# ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
-ai_replay_mem_total_size = 300000 # maybe try 100k instead
+ai_replay_mem_total_size = 1000000
 
 # Network Save
 net_should_save = True
@@ -42,6 +41,7 @@ stats_csv_path = "Stats/{}.csv".format(SESSION_NAME)
 plot_png_path = "Stats/{}.png".format(SESSION_NAME)
 
 # OpenAI GYM
+UPLOAD = False
 API_KEY = {
 "natasha": 'sk_9Ft7yJrgT2M4k7y7Fe8A',
 "hong": 'sk_9Ft7yJrgT2M4k7y7Fe8A', 

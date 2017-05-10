@@ -6,6 +6,7 @@ from statistics import Stats
 import constants as C
 import matplotlib.pyplot as plt
 import pdb
+import utils
 
 
 
@@ -52,87 +53,95 @@ class AI:
             if done:
                 break
 
-  def play_nn(self, training): 
+  def initialize_replay(self):
+    print "Initializing ReplayMemory with count {}".format(C.ai_replay_mem_start_size)
+
+    # until replay memory is initialized, play games
+    while self.network.mem.count < C.ai_replay_mem_start_size:
+      state = self.env.reset()
+      while True:
+        self.env.render_screen()
+        # format the current state to what we want
+        prepared_state = utils.preprocess(state)
+
+        # pick a random move and make the move
+        action = random.randrange(self.env.total_moves())
+        new_state, reward, done, info = self.env.take_action(action)
+
+        # add to replay memory
+        self.network.mem.add(action, reward, prepared_state, done)
+        state = new_state
+
+        if done:
+          break
+
+    print "Replay Memory initialization done!"
+
+  def train_nn(self): 
     num_steps = 0
     epoch = 0
     g = 0
 
     while epoch <= C.RUN_TILL_EPOCH:
-      g += 1 # num games
+      g += 1
       self.network.game_num = g
       print "Starting game: {}, total_steps: {}".format(g, num_steps)
 
       state = self.env.reset()
       assert state.shape == (210,160,3) # only for breakout right now
 
-      prepared_state = DeepQNetworkState.preprocess(state)
-      assert prepared_state.shape == (C.net_height, C.net_width, 1)
+      prepared_state = utils.preprocess(state)
+      assert prepared_state == (C.net_height, C.net_width, 1)
 
-      # setting s1 - s3 to be a black image
-      network_state = DeepQNetworkState(prepared_state, 
-                                        np.zeros(prepared_state.shape),
-                                        np.zeros(prepared_state.shape),
-                                        np.zeros(prepared_state.shape))
-      assert network_state.screens.shape == (C.net_height, C.net_width, 4)
+      # initialize replay memory
 
       # play until the AI loses or until the game completes
       while True:
         self.env.render_screen()
         num_steps += 1
-
         self.network.runs = num_steps
         self.network.epoch = epoch
 
-        # taking a step
-        if training:
-          # training so use epsilon sometimes
-          if random.random() < self.epsilon:
-            action = random.randrange(self.env.total_moves())
-          else:
-            action = self.network.take_action(network_state)
-
-          if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
-            self.epsilon -= C.ai_epsilon_anneal_rate 
+        # take one step
+        if random.random() < self.epsilon:
+          action = random.randrange(self.env.total_moves())
         else:
-          # testing so only use NN
-          action = self.network.take_action(network_state)
+          action = self.network.take_action(prepared_state)
+
+        # adjust epsilon for annealing
+        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.mem.count:
+          self.epsilon -= C.ai_epsilon_anneal_rate
 
         # sanity check
         assert (action < self.env.total_moves() and action >= 0)
 
+        # make the move
         new_state, reward, done, info = self.env.take_action(action)
-        new_network_state = DeepQNetworkState(DeepQNetworkState.preprocess(new_state), 
-                                              network_state.s0, 
-                                              network_state.s1, 
-                                              network_state.s2)
-        if training:
-          # (n,a,r,ns,d) like in the paper
-          memory = (network_state, action, reward, new_network_state, done)
-          self.network.insert_tuple_into_replay_memory(memory)
+        
+        # add to replay memory
+        self.network.mem.add(action, reward, prepared_state, done)
 
-          # train cnn 
-          if C.ai_replay_mem_start_size < self.network.replay_memory_size():
-            # only train every x number of runs
-            if num_steps % C.net_train_rate == 0:
-              batch = self.network.sample_random_replay_memory(C.ai_batch_size)
-              self.network.train_n_samples(batch)
+        # train cnn every x number of runs
+        if C.ai_replay_mem_start_size < self.network.mem.count:
+          if num_steps % C.net_train_rate == 0:
+            transitions = self.network.mem.getMinibatch()
+            self.network.train_n_samples(transitions)
 
-          # aggregate stats on every training step
-          self.stats.on_step(action, reward, done)
+        # aggregate stats on every training step
+        self.stats.on_step(action, reward, done)
 
-          # save every runs_till_save number of runs if we need to
-          if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
-            self.network.save()
+        # save network weights every epoch
+        if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
+          self.network.save()
 
         # plot every epoch
         if num_steps % C.STEPS_PER_EPOCH == 0:
-          # only plot if training
-          if training:
-            self.stats.write(epoch)
           epoch += 1
+          self.stats.write(epoch)
 
         # set variables for next loop
-        network_state = new_network_state
+        prepared_state = utils.preprocess(new_state)
+        assert prepared_state == (C.net_height, C.net_width, 1)
 
         # go to the next game if done
         if done:

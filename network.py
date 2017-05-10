@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 import pdb
 from utils import *
 from state import *
+from replay_memory import *
 
 class DeepQNetwork:
   def __init__(self): 
-    self.replay_memory = [] # [(s,a,r,s',d)] array of 4-tuple representing replay memory 
+    self.mem = ReplayMemory()
     self.batch_size = C.ai_batch_size
     self.height = C.net_height
-    self.width = C.net_width 
+    self.width = C.net_width
     self.num_screens = C.net_num_screens
     self.n_actions = C.net_n_actions
     self.discount_factor = C.net_discount_factor
