@@ -42,3 +42,15 @@ def convert_to_grayscale(image):
   """
   grayed = np.dot(image[...,:3], [0.299, 0.587, 0.114])
   return grayed
+
+def initialize_state(state):
+  """
+  For the beginning of the game, given a game state (84,84)
+  Returns:
+    A zero filled image including the state of size (4,84,84)
+  """
+  assert state.shape == (C.net_height, C.net_width)
+  result = np.zeros(C.net_num_screens, C.net_height, C.net_width)
+  result[0, :] = state[:,:]
+  assert result.shape == (C.net_num_screens, C.net_height, C.net_width)
+  return result

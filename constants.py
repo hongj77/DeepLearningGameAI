@@ -13,7 +13,7 @@ ai_batch_size = 32
 ai_init_epsilon = 1 # google 
 ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
-ai_replay_mem_start_size = 50000 # temp
+ai_replay_mem_start_size = 1000 # temp
 ai_replay_mem_total_size = 1000000
 
 # Network Save

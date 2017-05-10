@@ -53,12 +53,16 @@ class AI:
             if done:
                 break
 
+  def test_nn(self):
+    print "TODO"
+
   def initialize_replay(self):
     print "Initializing ReplayMemory with count {}".format(C.ai_replay_mem_start_size)
-
     # until replay memory is initialized, play games
     while self.network.mem.count < C.ai_replay_mem_start_size:
       state = self.env.reset()
+      print "Relpay Memory size: {}".format(self.network.mem.count)
+
       while True:
         self.env.render_screen()
         # format the current state to what we want
@@ -74,8 +78,10 @@ class AI:
 
         if done:
           break
-
     print "Replay Memory initialization done!"
+
+  def random_move(self):
+    return random.randrange(self.env.total_moves())
 
   def train_nn(self): 
     num_steps = 0
@@ -85,35 +91,37 @@ class AI:
     while epoch <= C.RUN_TILL_EPOCH:
       g += 1
       self.network.game_num = g
-      print "Starting game: {}, total_steps: {}".format(g, num_steps)
+      print "Starting game: {}, total steps: {}, memory count: {}".format(g, num_steps, self.network.mem.count)
 
       state = self.env.reset()
       assert state.shape == (210,160,3) # only for breakout right now
 
+      # for the first screen, initialize to something random
       prepared_state = utils.preprocess(state)
-      assert prepared_state == (C.net_height, C.net_width, 1)
-
-      # initialize replay memory
+      for _ in range(C.net_num_screens):
+        self.network.mem.add(self.random_move(), 0, prepared_state, False)
 
       # play until the AI loses or until the game completes
       while True:
         self.env.render_screen()
         num_steps += 1
         self.network.runs = num_steps
-        self.network.epoch = epoch
+
+        # get the last four things from the replay memory
+        state_with_history = self.network.mem.getLast()
 
         # take one step
         if random.random() < self.epsilon:
-          action = random.randrange(self.env.total_moves())
+          action = self.random_move()
         else:
-          action = self.network.take_action(prepared_state)
-
-        # adjust epsilon for annealing
-        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.mem.count:
-          self.epsilon -= C.ai_epsilon_anneal_rate
+          action = self.network.take_action(state_with_history)
 
         # sanity check
         assert (action < self.env.total_moves() and action >= 0)
+
+        # adjust epsilon for annealing
+        if self.epsilon > self.final_epsilon:
+          self.epsilon -= C.ai_epsilon_anneal_rate
 
         # make the move
         new_state, reward, done, info = self.env.take_action(action)
@@ -122,10 +130,9 @@ class AI:
         self.network.mem.add(action, reward, prepared_state, done)
 
         # train cnn every x number of runs
-        if C.ai_replay_mem_start_size < self.network.mem.count:
-          if num_steps % C.net_train_rate == 0:
-            transitions = self.network.mem.getMinibatch()
-            self.network.train_n_samples(transitions)
+        if num_steps % C.net_train_rate == 0:
+          transitions = self.network.mem.getMinibatch()
+          self.network.train_n_samples(transitions)
 
         # aggregate stats on every training step
         self.stats.on_step(action, reward, done)
@@ -137,11 +144,11 @@ class AI:
         # plot every epoch
         if num_steps % C.STEPS_PER_EPOCH == 0:
           epoch += 1
+          self.network.epoch = epoch
           self.stats.write(epoch)
 
         # set variables for next loop
         prepared_state = utils.preprocess(new_state)
-        assert prepared_state == (C.net_height, C.net_width, 1)
 
         # go to the next game if done
         if done:

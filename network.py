@@ -174,14 +174,17 @@ class DeepQNetwork:
         state - DeepQNetworkState object
       returns:
         np array of a single number
-        a single action number with the highest Q-value
+        a single action number with` the highest Q-value
     """
-    assert state.screens.shape == (84,84,4)
-    state = state.screens.reshape(1, 84, 84, 4)
+    # (4,84,84)
+    assert state.shape == (C.net_num_screens, C.net_height, C.net_width)
 
-    result = self.sess.run(self.out, feed_dict={self.x: state})
+    new_state = np.rollaxis(state, 0, 3) # this is the key to make it (84,84,4)
+    new_state = new_state.reshape(1, C.net_height, C.net_width, C.net_num_screens) # now (1,84,84,4)
+    assert new_state.shape == (1, C.net_height, C.net_width, C.net_num_screens)
+
+    result = self.sess.run(self.out, feed_dict={self.x: new_state})
     assert result.shape == (1,6)
-
     return np.argmax(result[0,:]) # the first index is the batch
 
   def train_n_samples(self, transitions):
@@ -189,32 +192,30 @@ class DeepQNetwork:
       Params:
         transitions [list] - list of tuples representing the sequence (s, a, r, ns, d). s and ns are DeepQNetworkState objects. The length should always equal batch size.
     """
-    assert len(transitions) == C.ai_batch_size
     self.trained_called += 1
+    prestates, actions, rewards, poststates, terminals = transitions
+  
+    assert actions.shape == (C.ai_batch_size,)
+    assert rewards.shape == (C.ai_batch_size,)
+    assert terminals.shape == (C.ai_batch_size,)
+    assert prestates.shape == (C.ai_batch_size, C.net_num_screens, C.net_height, C.net_width)
+    assert poststates.shape == (C.ai_batch_size, C.net_num_screens, C.net_height, C.net_width)
 
-    batch_size = C.ai_batch_size
-    states = np.ndarray((batch_size,84,84,4))
-    new_states = np.ndarray((batch_size,84,84,4))
-    rewards = np.ndarray(batch_size) # shape (32,)
-    actions = np.ndarray(batch_size) # shape (32,)
+    states = np.rollaxis(prestates, 1, 4)
+    new_states = np.rollaxis(poststates, 1, 4)
 
-    for i in range(batch_size):
-      s, a, r, ns, _ = transitions[i]
-      states[i,:,:,:] = s.screens[:,:,:]
-      new_states[i,:,:,:] = ns.screens[:,:,:]
-      rewards[i] = r
-      actions[i] = a
+    assert states.shape == (C.ai_batch_size, C.net_height, C.net_width, C.net_num_screens)
+    assert new_states.shape == (C.ai_batch_size, C.net_height, C.net_width, C.net_num_screens)
 
     # estimate the Q(s,a) for each batch
     target = rewards + self.predict(new_states)
     target = target[:,np.newaxis]
     assert target.shape == (32, 1)
 
-    for i in range(batch_size):
-      s,a,r,ns,d = transitions[i]
+    for i in range(C.ai_batch_size):
       # if terminal state make target the reward 
-      if d:
-        target[i] = r
+      if terminals[i]:
+        target[i] = rewards[i]
 
     # train network with gradient descent and get loss
     _, loss_sum = self.sess.run([self.optimizer, self.loss_sum], feed_dict={self.x: states, 

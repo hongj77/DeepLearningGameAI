@@ -44,8 +44,9 @@ class ReplayMemory:
     self.terminals[self.current] = terminal
     self.count = max(self.count, self.current + 1) # either full or not full yet
     self.current = (self.current + 1) % self.size # always advance and then mod
-    print("Memory count %d" % self.count)
-    print("Memory current %d" % self.current)
+
+    # print("Memory count %d" % self.count)
+    # print("Memory current %d" % self.current)
 
   
   def getState(self, index):
@@ -61,6 +62,16 @@ class ReplayMemory:
       # otherwise normalize indexes and use slower list based access
       indexes = [(index - i) % self.count for i in reversed(range(self.history_length))]
       return self.screens[indexes, ...]
+
+  def getLast(self):
+    """
+    Gets the last four screens in the screens
+    """
+    assert self.current > self.history_length
+    # Note: current is already 1 ahead of the index you want to get
+    last = self.screens[self.current-self.history_length:self.current]
+    assert last.shape == (C.net_num_screens, C.net_height, C.net_width)
+    return last
 
 
   def getMinibatch(self):

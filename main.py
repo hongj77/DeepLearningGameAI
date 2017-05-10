@@ -20,12 +20,14 @@ if __name__=="__main__":
     print "="*10
     print "Training AI for {} epochs".format(C.RUN_TILL_EPOCH)
     print "="*10
-    # ai.train_nn()
     ai.initialize_replay()
+    ai.train_nn()
+
   else:
     print "="*10
     print "Testing AI with file: {}".format(C.net_restore_path)
     print "="*10
+    ai.test_nn()
 
   if C.UPLOAD:
     print "="*10
