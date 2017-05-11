@@ -1,5 +1,7 @@
-from network import DeepQNetwork
+# from network import DeepQNetwork
 from network import DeepQNetworkState
+from deepnetwork import DeepQNetwork2
+
 import numpy as np
 import random
 from statistics import Stats 
@@ -29,7 +31,7 @@ class AI:
     self.num_episode_length = C.ai_qtable_num_episode_length
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
-    self.network = DeepQNetwork()
+    self.network = DeepQNetwork2(6,None)
     self.stats = Stats(self.network, self.env)
 
   def play_qtable(self):    
@@ -138,4 +140,7 @@ class AI:
         if done:
           break
 
+
+if __name__=="__main__":
+  print 1
 
