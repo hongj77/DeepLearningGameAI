@@ -1,7 +1,7 @@
 # General
 STEPS_PER_EPOCH = 10000 # temp
 RUN_TILL_EPOCH = 2000 # how many to run
-SESSION_NAME = "hong_mac2"
+SESSION_NAME = "hong_gpu5"
 
 # AI QTable
 ai_qtable_learning_rate = .85
@@ -15,7 +15,7 @@ ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
 ai_replay_mem_start_size = 50000 # temp
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
-ai_replay_mem_total_size = 100000 # maybe try 100k instead
+ai_replay_mem_total_size = 300000 # maybe try 100k instead
 
 # Network Save
 net_should_save = True
