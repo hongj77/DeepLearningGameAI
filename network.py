@@ -175,8 +175,8 @@ class DeepQNetwork:
         np array of a single number
         a single action number with the highest Q-value
     """
-    assert state.screens.shape == (84,84,4)
-    state = state.screens.reshape(1, 84, 84, 4)
+    assert state.screens().shape == (84,84,4)
+    state = state.screens().reshape(1, 84, 84, 4)
 
     result = self.sess.run(self.out, feed_dict={self.x: state})
     assert result.shape == (1,6)
@@ -199,8 +199,8 @@ class DeepQNetwork:
 
     for i in range(batch_size):
       s, a, r, ns, _ = transitions[i]
-      states[i,:,:,:] = s.screens[:,:,:]
-      new_states[i,:,:,:] = ns.screens[:,:,:]
+      states[i,:,:,:] = s.screens()[:,:,:]
+      new_states[i,:,:,:] = ns.screens()[:,:,:]
       rewards[i] = r
       actions[i] = a
 

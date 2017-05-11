@@ -73,7 +73,7 @@ class AI:
                                         np.zeros(prepared_state.shape),
                                         np.zeros(prepared_state.shape),
                                         np.zeros(prepared_state.shape))
-      assert network_state.screens.shape == (C.net_height, C.net_width, 4)
+      assert network_state.screens().shape == (C.net_height, C.net_width, 4)
 
       # play until the AI loses or until the game completes
       while True:

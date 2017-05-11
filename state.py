@@ -31,7 +31,9 @@ class DeepQNetworkState:
     self.s1 = s1
     self.s2 = s2
     self.s3 = s3
-    self.screens = np.concatenate((s0,s1,s2,s3), axis=2)
+
+  def screens(self):
+    return np.concatenate((self.s0,self.s1,self.s2,self.s3), axis=2)
 
   @staticmethod
   def preprocess(state):
