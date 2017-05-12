@@ -143,8 +143,38 @@ class DeepQNetwork:
 
   def sample_random_replay_memory(self, num_samples):
     assert num_samples <= len(self.replay_memory)
-    assert num_samples >= 0 
+    assert num_samples >= 0
     return random.sample(self.replay_memory, num_samples)
+
+  def get_minibatch(self):
+    """
+    Returns:
+      prestates, actions, rewards, poststates, terminals
+      prestates and poststates are (32,4,84,84)
+    """
+    transitions = random.sample(self.replay_memory, self.batch_size)
+
+    states = np.ndarray((self.batch_size,84,84,4))
+    new_states = np.ndarray((self.batch_size,84,84,4))
+    rewards = np.ndarray(self.batch_size) # shape (32,)
+    actions = np.ndarray(self.batch_size) # shape (32,)
+    terminals = np.ndarray(self.batch_size)
+
+    for i in range(self.batch_size):
+      s, a, r, ns, d = transitions[i]
+      states[i,:,:,:] = s.screens()[:,:,:]
+      new_states[i,:,:,:] = ns.screens()[:,:,:]
+      rewards[i] = r
+      actions[i] = a
+      terminals[i] = d
+
+    states = np.moveaxis(states,3,1)
+    new_states = np.moveaxis(new_states,3,1)
+
+    assert states.shape == (self.batch_size, 4, 84, 84)
+    assert new_states.shape == (self.batch_size, 4, 84, 84)
+
+    return states, actions, rewards, new_states, terminals
 
   def replay_memory_size(self):
     return len(self.replay_memory)

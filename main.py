@@ -20,14 +20,15 @@ if __name__=="__main__":
     print "="*10
     print "Training AI for {} epochs".format(C.RUN_TILL_EPOCH)
     print "="*10
+    ai.train_nn()
   else:
     print "="*10
     print "Testing AI with file: {}".format(C.net_restore_path)
     print "="*10
+    ai.test_nn()
 
-  ai.play_nn(training)
-
-  print "="*10
-  print "Uploading game to OpenAI"
-  print "="*10  
-  env.upload_game()
+  if C.UPLOAD:
+    print "="*10
+    print "Uploading game to OpenAI"
+    print "="*10  
+    env.upload_game()

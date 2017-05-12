@@ -65,16 +65,18 @@ class OpenAIGym():
     gym.upload(self.upload_name, api_key=C.API_KEY[self.player])
 
   def resize(self, screen):
-    return cv2.resize(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
+    screen = cv2.resize(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
+    return screen[:,:,np.newaxis]
 
   def show(self, screen):
+    screen = screen.reshape((self.screen_width, self.screen_height))
     plt.imshow(screen, cmap='gray')
     plt.show()
 
 
 if __name__=="__main__":
   # hand testing image resizing and game initialization
-  
+
   env = OpenAIGym("Breakout-v0", True, "hong", 0)
   for _ in range(5):
     screen = env.reset()
