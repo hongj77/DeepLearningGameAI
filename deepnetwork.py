@@ -11,27 +11,28 @@ import numpy as np
 import os
 import logging
 logger = logging.getLogger(__name__)
+import constants as C
 
-class DeepQNetwork2:
-  def __init__(self, num_actions, args):
+class DeepQNetworkNeon:
+  def __init__(self):
     # remember parameters
-    self.num_actions = num_actions
-    self.batch_size = args.batch_size
-    self.discount_rate = args.discount_rate
-    self.history_length = args.history_length
-    self.screen_dim = (args.screen_height, args.screen_width)
-    self.clip_error = args.clip_error
-    self.min_reward = args.min_reward
-    self.max_reward = args.max_reward
-    self.batch_norm = args.batch_norm
+    self.num_actions = C.net_n_actions
+    self.batch_size = C.ai_batch_size
+    self.discount_rate = C.net_discount_factor
+    self.history_length = C.net_num_screens
+    self.screen_dim = (C.net_height, C.net_width)
+    self.clip_error = C.net_clip_error
+    self.min_reward = C.net_min_reward
+    self.max_reward = C.net_max_reward
+    self.batch_norm = C.batch_norm
 
     # create Neon backend
-    self.be = gen_backend(backend = args.backend,
-                 batch_size = args.batch_size,
-                 rng_seed = args.random_seed,
-                 device_id = args.device_id,
-                 datatype = np.dtype(args.datatype).type,
-                 stochastic_round = args.stochastic_round)
+    self.be = gen_backend(backend = C.backend,
+                 batch_size = self.batch_size,
+                 rng_seed = 0,
+                 device_id = 0,
+                 datatype = np.dtype('float32').type,
+                 stochastic_round = C.stochastic_round)
 
     # prepare tensors once and reuse them
     self.input_shape = (self.history_length,) + self.screen_dim + (self.batch_size,)
@@ -40,35 +41,35 @@ class DeepQNetwork2:
     self.targets = self.be.empty((self.num_actions, self.batch_size))
 
     # create model
-    layers = self._createLayers(num_actions)
+    layers = self._createLayers(self.num_actions)
     self.model = Model(layers = layers)
     self.cost = GeneralizedCost(costfunc = SumSquared())
     # Bug fix
     for l in self.model.layers.layers:
       l.parallelism = 'Disabled'
     self.model.initialize(self.input_shape[:-1], self.cost)
-    if args.optimizer == 'rmsprop':
-      self.optimizer = RMSProp(learning_rate = args.learning_rate, 
-          decay_rate = args.decay_rate, 
-          stochastic_round = args.stochastic_round)
-    elif args.optimizer == 'adam':
-      self.optimizer = Adam(learning_rate = args.learning_rate, 
-          stochastic_round = args.stochastic_round)
-    elif args.optimizer == 'adadelta':
-      self.optimizer = Adadelta(decay = args.decay_rate, 
-          stochastic_round = args.stochastic_round)
+    if C.optimizer == 'rmsprop':
+      self.optimizer = RMSProp(learning_rate = C.net_learning_rate, 
+          decay_rate = C.decay_rate, 
+          stochastic_round = C.stochastic_round)
+    elif C.optimizer == 'adam':
+      self.optimizer = Adam(learning_rate = C.net_learning_rate, 
+          stochastic_round = C.stochastic_round)
+    elif C.optimizer == 'adadelta':
+      self.optimizer = Adadelta(decay = C.decay_rate, 
+          stochastic_round = C.stochastic_round)
     else:
       assert false, "Unknown optimizer"
 
     # create target model
     self.train_iterations = 0
-    if args.target_steps:
-      self.target_model = Model(layers = self._createLayers(num_actions))
+    if C.target_steps:
+      self.target_model = Model(layers = self._createLayers(self.num_actions))
       # Bug fix
       for l in self.target_model.layers.layers:
         l.parallelism = 'Disabled'
       self.target_model.initialize(self.input_shape[:-1])
-      self.save_weights_prefix = args.save_weights_prefix
+      self.save_weights_prefix = C.SESSION_NAME
     else:
       self.target_model = self.model
 
@@ -191,17 +192,17 @@ class DeepQNetwork2:
   def save_weights(self, save_path):
     self.model.save_params(save_path)
 
-    self.min_reward = args.min_reward
-    self.max_reward = args.max_reward
-    self.batch_norm = args.batch_norm
+    self.min_reward = C.min_reward
+    self.max_reward = C.max_reward
+    self.batch_norm = C.batch_norm
 
     # create Neon backend
-    self.be = gen_backend(backend = args.backend,
-                 batch_size = args.batch_size,
-                 rng_seed = args.random_seed,
-                 device_id = args.device_id,
-                 datatype = np.dtype(args.datatype).type,
-                 stochastic_round = args.stochastic_round)
+    self.be = gen_backend(backend = C.backend,
+                 batch_size = C.ai_batch_size,
+                 rng_seed = 0,
+                 device_id = 0,
+                 datatype = np.dtype("float32").type,
+                 stochastic_round = C.stochastic_round)
 
     # prepare tensors once and reuse them
     self.input_shape = (self.history_length,) + self.screen_dim + (self.batch_size,)
@@ -210,35 +211,35 @@ class DeepQNetwork2:
     self.targets = self.be.empty((self.num_actions, self.batch_size))
 
     # create model
-    layers = self._createLayers(num_actions)
+    layers = self._createLayers(self.num_actions)
     self.model = Model(layers = layers)
     self.cost = GeneralizedCost(costfunc = SumSquared())
     # Bug fix
     for l in self.model.layers.layers:
       l.parallelism = 'Disabled'
     self.model.initialize(self.input_shape[:-1], self.cost)
-    if args.optimizer == 'rmsprop':
-      self.optimizer = RMSProp(learning_rate = args.learning_rate, 
-          decay_rate = args.decay_rate, 
-          stochastic_round = args.stochastic_round)
-    elif args.optimizer == 'adam':
-      self.optimizer = Adam(learning_rate = args.learning_rate, 
-          stochastic_round = args.stochastic_round)
-    elif args.optimizer == 'adadelta':
-      self.optimizer = Adadelta(decay = args.decay_rate, 
-          stochastic_round = args.stochastic_round)
+    if C.optimizer == 'rmsprop':
+      self.optimizer = RMSProp(learning_rate = C.net_learning_rate, 
+          decay_rate = C.decay_rate, 
+          stochastic_round = C.stochastic_round)
+    elif C.optimizer == 'adam':
+      self.optimizer = Adam(learning_rate = C.net_learning_rate, 
+          stochastic_round = C.stochastic_round)
+    elif C.optimizer == 'adadelta':
+      self.optimizer = Adadelta(decay = C.decay_rate, 
+          stochastic_round = C.stochastic_round)
     else:
       assert false, "Unknown optimizer"
 
     # create target model
     self.train_iterations = 0
-    if args.target_steps:
-      self.target_model = Model(layers = self._createLayers(num_actions))
+    if C.target_steps:
+      self.target_model = Model(layers = self._createLayers(self.num_actions))
       # Bug fix
       for l in self.target_model.layers.layers:
         l.parallelism = 'Disabled'
       self.target_model.initialize(self.input_shape[:-1])
-      self.save_weights_prefix = args.save_weights_prefix
+      self.save_weights_prefix = C.SESSION_NAME
     else:
       self.target_model = self.model
 
@@ -360,3 +361,6 @@ class DeepQNetwork2:
 
   def save_weights(self, save_path):
     self.model.save_params(save_path)
+
+if __name__=="__main__":
+  net = DeepQNetworkNeon()

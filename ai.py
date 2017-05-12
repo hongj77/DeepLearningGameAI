@@ -65,7 +65,6 @@ class AI:
       print "Starting game: {}, total_steps: {}".format(g, num_steps)
 
       state = self.env.reset()
-      assert state.shape == (210,160,3) # only for breakout right now
 
       prepared_state = DeepQNetworkState.preprocess(state)
       assert prepared_state.shape == (C.net_height, C.net_width, 1)

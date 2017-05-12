@@ -35,6 +35,17 @@ net_discount_factor = .97 # google
 net_dropout = 1 # probability to keep units. Not using this right now
 net_train_rate = 4 # how many steps for 1 train
 
+# NEON
+net_clip_error = 1
+net_max_reward = 1
+net_min_reward = -1
+batch_norm = False
+backend = "cpu"
+optimizer = "adam"
+decay_rate = 0.95
+stochastic_round = False
+target_steps = 10000
+
 # Stats 
 stats_csv_path = "Stats/{}.csv".format(SESSION_NAME)
 

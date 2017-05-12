@@ -25,7 +25,6 @@ class DeepQNetworkState:
 
       s0 - s3 are numpy.ndarray of shape (C.net_height, C.net_width, 1) 
   """
-  
   def __init__(self,s0,s1,s2,s3):
     self.s0 = s0
     self.s1 = s1
