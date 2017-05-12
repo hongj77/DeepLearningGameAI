@@ -78,10 +78,11 @@ class Stats:
     
     if not self.validation:
       self.validation = True
-      minibatch = self.mem.get_minibatch()
-      screen = minibatch[0]
-      self.validation_set = screen
-      max_qvalues = self.network.predict(screen)
+      states, actions, rewards, new_states, terminals = self.mem.get_minibatch()
+      self.validation_set = states
+      
+    if self.validation:
+      max_qvalues = self.network.predict(self.validation_set)
       self.average_q = np.mean(max_qvalues)
     else:
       self.average_q = 0

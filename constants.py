@@ -1,7 +1,7 @@
 # General
-STEPS_PER_EPOCH = 100 # temp
+STEPS_PER_EPOCH = 10000 # temp
 RUN_TILL_EPOCH = 1500 # how many to run
-SESSION_NAME = "hong_replay_1000k"
+SESSION_NAME = "hong_newnetwork"
 
 # AI QTable
 ai_qtable_learning_rate = .85
@@ -13,7 +13,7 @@ ai_batch_size = 32
 ai_init_epsilon = 1 # google 
 ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
-ai_replay_mem_start_size = 50 # temp
+ai_replay_mem_start_size = 50000 # temp
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
 ai_replay_mem_total_size = 1000000 # maybe try 100k instead
 
@@ -31,7 +31,7 @@ net_height = 84
 net_width = 84
 net_num_screens = 4
 net_n_actions = 6
-net_discount_factor = .97 # google
+net_discount_factor = .99 # google
 net_dropout = 1 # probability to keep units. Not using this right now
 net_train_rate = 4 # how many steps for 1 train
 
@@ -40,7 +40,7 @@ net_clip_error = 1
 net_max_reward = 1
 net_min_reward = -1
 batch_norm = False
-backend = "cpu"
+backend = "gpu"
 optimizer = "adam"
 decay_rate = 0.95
 stochastic_round = False
@@ -58,4 +58,4 @@ API_KEY = {
 "hong": 'sk_9Ft7yJrgT2M4k7y7Fe8A', 
 }
 
-UPLOAD = False
+UPLOAD = True

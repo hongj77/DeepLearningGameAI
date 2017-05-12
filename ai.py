@@ -68,7 +68,7 @@ class AI:
 
     while epoch < C.RUN_TILL_EPOCH:
       g += 1
-      self.network.game_num = g
+      self.neon.game_num = g
       print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.replay_memory_size())
 
       # setting s1 - s3 to be a black image
@@ -88,10 +88,9 @@ class AI:
         else:
           # action = self.network.take_action(network_state)
           screen = network_state.screens_neon()
+          # pdb.set_trace()
           qvals = self.neon.predict(screen)
-          argmax = np.argmax(qvals, axis=0)
-          assert len(argmax) == 32
-          action = argmax[0]
+          action = np.argmax(qvals[0])
 
         # reduce epsilon by annealing rate
         if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.mem.replay_memory_size():
@@ -126,9 +125,9 @@ class AI:
           self.neon.epoch = epoch
           self.stats.write(epoch)
 
-        # # save every epoch
-        # if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
-        #   self.network.save()
+        # save every epoch
+        if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
+          self.neon.save()
 
         # set variables for next loop
         network_state = new_network_state
