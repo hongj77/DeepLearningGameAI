@@ -1,6 +1,7 @@
 from network import DeepQNetwork
 from state import DeepQNetworkState
 from deepnetwork import DeepQNetworkNeon
+from replay import Replay
 
 import numpy as np
 import random
@@ -8,6 +9,7 @@ from statistics import Stats
 import constants as C
 import matplotlib.pyplot as plt
 import pdb
+
 
 
 
@@ -31,6 +33,7 @@ class AI:
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
     self.network = DeepQNetwork()
+    self.mem = Replay()
     self.stats = Stats(self.network, self.env)
 
   def play_qtable(self):    
@@ -67,7 +70,7 @@ class AI:
     while epoch < C.RUN_TILL_EPOCH:
       g += 1
       self.network.game_num = g
-      print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.network.replay_memory_size())
+      print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.replay_memory_size())
 
       # setting s1 - s3 to be a black image
       state = self.env.reset()
@@ -87,7 +90,7 @@ class AI:
           action = self.network.take_action(network_state)
 
         # reduce epsilon by annealing rate
-        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.network.replay_memory_size():
+        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.mem.replay_memory_size():
           self.epsilon -= C.ai_epsilon_anneal_rate 
         
         # sanity check
@@ -99,13 +102,13 @@ class AI:
         # make new state and put the tuple in memory
         new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
         memory = (network_state, action, reward, new_network_state, done)
-        self.network.insert_tuple_into_replay_memory(memory)
+        self.mem.insert_tuple_into_replay_memory(memory)
 
         # train cnn 
-        if C.ai_replay_mem_start_size < self.network.replay_memory_size():
+        if C.ai_replay_mem_start_size < self.mem.replay_memory_size():
           # only train every x number of runs
           if num_steps % C.net_train_rate == 0:
-            batch = self.network.sample_random_replay_memory(C.ai_batch_size)
+            batch = self.mem.sample_random_replay_memory(C.ai_batch_size)
             self.network.train_n_samples(batch)
 
         # aggregate stats on every training step
