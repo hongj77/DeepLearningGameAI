@@ -33,3 +33,13 @@ class DeepQNetworkState:
 
   def screens(self):
     return np.concatenate((self.s0,self.s1,self.s2,self.s3), axis=2)
+
+  def screens_neon(self):
+    """
+    Return [1,4,84,84]
+    """
+    screens = self.screens()
+    screens = np.moveaxis(screens, 2, 0)
+    screens = screens[np.newaxis, :, :, :]
+    assert screens.shape == (1,4,84,84)
+    return screens

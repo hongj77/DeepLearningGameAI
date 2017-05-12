@@ -25,6 +25,8 @@ class DeepQNetworkNeon:
     self.min_reward = C.net_min_reward
     self.max_reward = C.net_max_reward
     self.batch_norm = C.batch_norm
+    self.runs = 0
+    self.epoch = 0
 
     # create Neon backend
     self.be = gen_backend(backend = C.backend,
@@ -340,7 +342,7 @@ class DeepQNetworkNeon:
 
     # calculate statistics
     if self.callback:
-      self.callback.on_train(cost[0,0])
+      self.callback.on_train(cost[0,0], self.train_iterations)
 
   def predict(self, states):
     # minibatch is full size, because Neon doesn't let change the minibatch size

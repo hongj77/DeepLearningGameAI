@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import pdb
 
 
-
-
 class AI:
   """AI agent that we use to interact with the game environment. 
 
@@ -32,9 +30,10 @@ class AI:
     self.num_episode_length = C.ai_qtable_num_episode_length
     self.epsilon = C.ai_init_epsilon 
     self.final_epsilon = C.ai_final_epsilon
-    self.network = DeepQNetwork()
+    # self.network = DeepQNetwork()
+    self.neon = DeepQNetworkNeon()
     self.mem = Replay()
-    self.stats = Stats(self.network, self.env)
+    self.stats = Stats(self.neon, self.env, self.mem)
 
   def play_qtable(self):    
     Q = np.zeros([self.env.screen_space(),self.env.total_moves()]);
@@ -81,13 +80,18 @@ class AI:
       while True:
         self.env.render_screen()
         num_steps += 1
-        self.network.runs = num_steps
+        self.neon.runs = num_steps
         
         # taking a step
         if random.random() < self.epsilon:
           action = self.random_move()
         else:
-          action = self.network.take_action(network_state)
+          # action = self.network.take_action(network_state)
+          screen = network_state.screens_neon()
+          qvals = self.neon.predict(screen)
+          argmax = np.argmax(qvals, axis=0)
+          assert len(argmax) == 32
+          action = argmax[0]
 
         # reduce epsilon by annealing rate
         if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.mem.replay_memory_size():
@@ -108,8 +112,10 @@ class AI:
         if C.ai_replay_mem_start_size < self.mem.replay_memory_size():
           # only train every x number of runs
           if num_steps % C.net_train_rate == 0:
-            batch = self.mem.sample_random_replay_memory(C.ai_batch_size)
-            self.network.train_n_samples(batch)
+            # batch = self.mem.sample_random_replay_memory(C.ai_batch_size)
+            # self.network.train_n_samples(batch)
+            minibatch = self.mem.get_minibatch()
+            self.neon.train(minibatch, epoch)
 
         # aggregate stats on every training step
         self.stats.on_step(action, reward, done)
@@ -117,12 +123,12 @@ class AI:
         # plot every epoch
         if num_steps % C.STEPS_PER_EPOCH == 0:
           epoch += 1
-          self.network.epoch = epoch
+          self.neon.epoch = epoch
           self.stats.write(epoch)
 
-        # save every epoch
-        if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
-          self.network.save()
+        # # save every epoch
+        # if C.net_should_save and num_steps % C.STEPS_PER_EPOCH == 0:
+        #   self.network.save()
 
         # set variables for next loop
         network_state = new_network_state

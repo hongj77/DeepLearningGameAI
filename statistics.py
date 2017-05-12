@@ -16,11 +16,15 @@ class Stats:
   Keey running statistics on everything we want to plot.
   These statistics will only get plotted every C.STEPS_PER_PLOT
   """
-  def __init__(self, network, game):
+  def __init__(self, network, game, mem):
+    self.mem = mem
     self.network = network 
     self.game = game 
     self.network.callback = self
     self.csv_path = C.stats_csv_path 
+
+    self.validation = False
+    self.validation_set = None
 
     if self.csv_path != "":
       self.csv_file = open(self.csv_path, "wb")
@@ -72,9 +76,12 @@ class Stats:
     self.epoch = epoch
     print "Plotted Statistics at Epoch: {}".format(self.epoch)
     
-    if self.network.validation:
-      # validation set was initialized
-      max_qvalues = self.network.predict(self.network.validation_set)
+    if not self.validation:
+      self.validation = True
+      minibatch = self.mem.get_minibatch()
+      screen = minibatch[0]
+      self.validation_set = screen
+      max_qvalues = self.network.predict(screen)
       self.average_q = np.mean(max_qvalues)
     else:
       self.average_q = 0
