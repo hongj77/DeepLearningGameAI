@@ -107,6 +107,9 @@ class AI:
         memory = (network_state, action, reward, new_network_state, done)
         self.mem.insert_tuple_into_replay_memory(memory)
 
+        if C.target_steps and num_steps % C.target_steps == 0:
+          self.neon.update_target_network()
+
         # train cnn 
         if C.ai_replay_mem_start_size < self.mem.replay_memory_size():
           # only train every x number of runs

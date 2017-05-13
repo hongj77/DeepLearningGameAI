@@ -1,7 +1,7 @@
 # General
-STEPS_PER_EPOCH = 10000 # temp
-RUN_TILL_EPOCH = 1500 # how many to run
-SESSION_NAME = "hong_newnetwork"
+STEPS_PER_EPOCH = 50000 # temp
+RUN_TILL_EPOCH = 480 # how many to run
+SESSION_NAME = "hong_newnetwork2"
 
 # AI QTable
 ai_qtable_learning_rate = .85
