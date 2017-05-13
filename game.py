@@ -77,7 +77,8 @@ class OpenAIGym():
 if __name__=="__main__":
   # hand testing image resizing and game initialization
 
-  env = OpenAIGym("Breakout-v0", True, "hong", 0)
+  env = OpenAIGym("LunarLander-v2", True, "hong", 0)
+  # games
   for _ in range(5):
     screen = env.reset()
     i = 0
