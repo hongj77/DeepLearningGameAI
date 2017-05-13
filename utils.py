@@ -1,3 +1,7 @@
+from scipy import misc
+import scipy
+import numpy as np
+import constants as C
 
 def t_shape(tensor):
   """
@@ -15,7 +19,7 @@ def preprocess(state):
     preprocessed state that resizes the image and grayscales it
     returns an image with shape (C.net_height, C.net_width, 1)
   """
-  sg = DeepQNetworkState.convert_to_grayscale(state)
+  sg = convert_to_grayscale(state)
   #Google used bilinear 
   sg = scipy.misc.imresize(sg,(110,84),interp="bilinear")
 

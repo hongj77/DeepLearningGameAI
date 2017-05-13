@@ -6,6 +6,7 @@ import cv2
 import pdb
 import numpy as np
 import matplotlib.pyplot as plt
+import utils
 
 class OpenAIGym():
   """
@@ -65,8 +66,11 @@ class OpenAIGym():
     gym.upload(self.upload_name, api_key=C.API_KEY[self.player])
 
   def resize(self, screen):
-    screen = cv2.resize(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
-    return screen[:,:,np.newaxis]
+    # screen = cv2.resize(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
+
+    # return screen[:,:,np.newaxis]
+    screen = utils.preprocess(screen)
+    return screen
 
   def show(self, screen):
     screen = screen.reshape((self.screen_width, self.screen_height))
@@ -77,12 +81,13 @@ class OpenAIGym():
 if __name__=="__main__":
   # hand testing image resizing and game initialization
 
-  env = OpenAIGym("LunarLander-v2", True, "hong", 0)
+  env = OpenAIGym("DemonAttack-v0", True, "hong", 0)
   # games
   for _ in range(5):
     screen = env.reset()
     i = 0
     while True:
+      # env.render_screen()
       i+=1
       # env.render_screen()
       screen, reward, done, info = env.take_action(1)
