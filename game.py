@@ -66,8 +66,8 @@ class OpenAIGym():
     gym.upload(self.upload_name, api_key=C.API_KEY[self.player])
 
   def resize(self, screen):
-    # screen = cv2.resize(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
-
+    # pdb.set_trace()
+    # screen = cv2.resize(cv2.crewvtColor(screen, cv2.COLOR_RGB2GRAY), (self.screen_width, self.screen_height))
     # return screen[:,:,np.newaxis]
     screen = utils.preprocess(screen)
     return screen
@@ -91,9 +91,11 @@ if __name__=="__main__":
       i+=1
       # env.render_screen()
       screen, reward, done, info = env.take_action(1)
+      pdb.set_trace()
       if done:
         break
       if i % 100 == 0:
-        env.show(screen)
+        # env.show(screen)
+        pass
 
 
