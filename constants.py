@@ -45,6 +45,7 @@ optimizer = "adam"
 decay_rate = 0.95
 stochastic_round = False
 target_steps = 10000
+random_starts = 30
 
 # Stats 
 stats_csv_path = "Stats/{}.csv".format(SESSION_NAME)

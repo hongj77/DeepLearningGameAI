@@ -2,6 +2,8 @@ from network import DeepQNetwork
 from state import DeepQNetworkState
 from deepnetwork import DeepQNetworkNeon
 from replay import Replay
+from state_buffer import StateBuffer
+from replay_memory import ReplayMemory
 
 import numpy as np
 import random
@@ -32,8 +34,10 @@ class AI:
     self.final_epsilon = C.ai_final_epsilon
     # self.network = DeepQNetwork()
     self.neon = DeepQNetworkNeon()
-    self.mem = Replay()
+    # self.mem = Replay()
+    self.mem = ReplayMemory()
     self.stats = Stats(self.neon, self.env, self.mem)
+    self.buf = StateBuffer()
 
   def play_qtable(self):    
     Q = np.zeros([self.env.screen_space(),self.env.total_moves()]);
@@ -61,6 +65,14 @@ class AI:
   def test_nn(self):
     print "TODO"
 
+  def restart_random(self):
+    state = self.env.reset()
+    for _ in range(random.randint(C.net_num_screens, C.random_starts) + 1):
+      screen, reward, done, info = self.env.take_action(0)
+      if done:
+        state = self.env.reset()
+      self.buf.add(screen)
+
   def train_nn(self): 
     num_steps = 0
     epoch = 0
@@ -70,24 +82,23 @@ class AI:
       g += 1
       self.neon.game_num = g
       print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.replay_memory_size())
-
-      # setting s1 - s3 to be a black image
-      state = self.env.reset()
-      network_state = DeepQNetworkState(state, np.zeros(state.shape), np.zeros(state.shape), np.zeros(state.shape))
-      assert network_state.screens().shape == (C.net_height, C.net_width, 4)
-
+      # restart random
+      restart_random()
       # play until the AI loses or until the game completes
       while True:
         self.env.render_screen()
         num_steps += 1
         self.neon.runs = num_steps
+
+        # get screen
+        screen = self.buf.getStateMinibatch()
         
         # taking a step
         if random.random() < self.epsilon:
           action = self.random_move()
         else:
           # action = self.network.take_action(network_state)
-          screen = network_state.screens_neon()
+          # screen = network_state.screens_neon()
           # pdb.set_trace()
           qvals = self.neon.predict(screen)
           action = np.argmax(qvals[0])
@@ -102,10 +113,17 @@ class AI:
         # take an action
         new_state, reward, done, info = self.env.take_action(action)
 
+        self.buf.add(new_state)
+
+        # go to the next game if done
+        if done:
+          break
+
         # make new state and put the tuple in memory
-        new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
-        memory = (network_state, action, reward, new_network_state, done)
-        self.mem.insert_tuple_into_replay_memory(memory)
+        # new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
+        # memory = (network_state, action, reward, new_network_state, done)
+        # self.mem.insert_tuple_into_replay_memory(memory)
+        self.mem.add(action, reward, new_state, done)
 
         if C.target_steps and num_steps % C.target_steps == 0:
           self.neon.update_target_network()
@@ -116,7 +134,8 @@ class AI:
           if num_steps % C.net_train_rate == 0:
             # batch = self.mem.sample_random_replay_memory(C.ai_batch_size)
             # self.network.train_n_samples(batch)
-            minibatch = self.mem.get_minibatch()
+            # minibatch = self.mem.get_minibatch()
+            minibatch = self.mem.getMinibatch()
             self.neon.train(minibatch, epoch)
 
         # aggregate stats on every training step
@@ -133,8 +152,4 @@ class AI:
           self.neon.save()
 
         # set variables for next loop
-        network_state = new_network_state
-
-        # go to the next game if done
-        if done:
-          break
+        # network_state = new_network_state
