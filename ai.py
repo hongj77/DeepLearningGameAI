@@ -81,7 +81,7 @@ class AI:
     while epoch < C.RUN_TILL_EPOCH:
       g += 1
       self.neon.game_num = g
-      print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.replay_memory_size())
+      print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.count)
       # restart random
       restart_random()
       # play until the AI loses or until the game completes
@@ -104,7 +104,7 @@ class AI:
           action = np.argmax(qvals[0])
 
         # reduce epsilon by annealing rate
-        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.mem.replay_memory_size():
+        if self.epsilon > self.final_epsilon and C.ai_replay_mem_start_size < self.mem.count:
           self.epsilon -= C.ai_epsilon_anneal_rate 
         
         # sanity check
@@ -129,7 +129,7 @@ class AI:
           self.neon.update_target_network()
 
         # train cnn 
-        if C.ai_replay_mem_start_size < self.mem.replay_memory_size():
+        if C.ai_replay_mem_start_size < self.mem.count:
           # only train every x number of runs
           if num_steps % C.net_train_rate == 0:
             # batch = self.mem.sample_random_replay_memory(C.ai_batch_size)

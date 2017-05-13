@@ -78,7 +78,7 @@ class Stats:
     
     if not self.validation:
       self.validation = True
-      states, actions, rewards, new_states, terminals = self.mem.get_minibatch()
+      states, actions, rewards, new_states, terminals = self.mem.getMinibatch()
       self.validation_set = states
       
     if self.validation:
