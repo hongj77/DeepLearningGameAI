@@ -1,7 +1,7 @@
 # General
 STEPS_PER_EPOCH = 50000 # temp
 RUN_TILL_EPOCH = 100 # how many to run
-SESSION_NAME = "hong_demonattack"
+SESSION_NAME = "hong_demonattack2"
 
 # AI QTable
 ai_qtable_learning_rate = .85

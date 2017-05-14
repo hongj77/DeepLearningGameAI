@@ -67,6 +67,7 @@ class AI:
     g = 0
 
     while epoch < C.RUN_TILL_EPOCH:
+      lives = -1
       g += 1
       self.neon.game_num = g
       print "Starting game: {}, total_steps: {}, memory size: {}".format(g, num_steps, self.mem.replay_memory_size())
@@ -101,6 +102,15 @@ class AI:
 
         # take an action
         new_state, reward, done, info = self.env.take_action(action)
+        current_life = info['ale.lives']
+        # initialize life count
+        if lives == -1:
+          lives = current_life
+
+        # negative reward if we lost a life or lost the game
+        if lives > current_life:
+          lives = current_life
+          reward = -1
 
         # make new state and put the tuple in memory
         new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
