@@ -65,6 +65,8 @@ class AI:
     self.neon.load_weights(path_with_epoch)
 
     g = 0
+    num_steps = 0
+
     while True:
       g+=1
       print "Test | Starting game: {}".format(g)
@@ -73,11 +75,16 @@ class AI:
       network_state = DeepQNetworkState(state, np.zeros(state.shape), np.zeros(state.shape), np.zeros(state.shape))
 
       while True:
+        num_steps += 1
         self.env.render_screen()
         screen = network_state.screens_neon()
         qvals = self.neon.predict(screen)
+        max_q = np.max(qvals[0])
         action = np.argmax(qvals[0])
         new_state, reward, done, info = self.env.take_action(action)
+
+        if num_steps % 100000 == 0:
+          pdb.set_trace()
 
         new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
 

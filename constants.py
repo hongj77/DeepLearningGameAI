@@ -1,7 +1,7 @@
 # General
-STEPS_PER_EPOCH = 50000 # temp
+STEPS_PER_EPOCH = 100 # temp
 RUN_TILL_EPOCH = 100 # how many to run
-SESSION_NAME = "hong_demonattack2"
+SESSION_NAME = "hong_visualtest"
 
 # AI QTable
 ai_qtable_learning_rate = .85
@@ -13,14 +13,14 @@ ai_batch_size = 32
 ai_init_epsilon = 1 # google 
 ai_final_epsilon = .1 # google
 ai_epsilon_anneal_rate = 1.0/1000000 # google
-ai_replay_mem_start_size = 50000 # temp
+ai_replay_mem_start_size = 50 # temp
 # ai_replay_mem_total_size = 1000000 # this results in memory running out around 400k-600k
 ai_replay_mem_total_size = 1000000 # maybe try 100k instead
 
 # Network Save
 net_should_save = True
-net_should_restore = False # if this is on, then we go to test mode
-RESTORE_EPOCH = 1 # change this whenever you need to restore a specific epoch
+net_should_restore = True # if this is on, then we go to test mode
+RESTORE_EPOCH = 5 # change this whenever you need to restore a specific epoch
 net_restore_path = "SavedSessions/{}-{}.ckpt".format(SESSION_NAME, RESTORE_EPOCH)
 net_save_path = "SavedSessions/{}".format(SESSION_NAME) # path to save the session
 net_runs_till_save = STEPS_PER_EPOCH # save every epoch
@@ -40,7 +40,7 @@ net_clip_error = 1
 net_max_reward = 1
 net_min_reward = -1
 batch_norm = False
-backend = "gpu"
+backend = "cpu"
 optimizer = "adam"
 decay_rate = 0.95
 stochastic_round = False
