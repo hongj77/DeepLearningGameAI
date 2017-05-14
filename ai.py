@@ -59,7 +59,32 @@ class AI:
     return random.randrange(self.env.total_moves())
 
   def test_nn(self):
-    print "TODO"
+    # load weights
+    path_with_epoch = "{}-{}.ckpt".format(C.net_save_path, C.RESTORE_EPOCH)
+    print "Restoring from {}".format(path_with_epoch)
+    self.neon.load_weights(path_with_epoch)
+
+    g = 0
+    while True:
+      g+=1
+      print "Test | Starting game: {}".format(g)
+
+      state = self.env.reset()
+      network_state = DeepQNetworkState(state, np.zeros(state.shape), np.zeros(state.shape), np.zeros(state.shape))
+
+      while True:
+        self.env.render_screen()
+        screen = network_state.screens_neon()
+        qvals = self.neon.predict(screen)
+        action = np.argmax(qvals[0])
+        new_state, reward, done, info = self.env.take_action(action)
+
+        new_network_state = DeepQNetworkState(new_state, network_state.s0, network_state.s1, network_state.s2)
+
+        network_state = new_network_state
+
+        if done:
+          break
 
   def train_nn(self): 
     num_steps = 0
