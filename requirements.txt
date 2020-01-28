@@ -54,6 +54,6 @@ six==1.10.0
 snowballstemmer==1.2.1
 Sphinx==1.4.6
 subprocess32==3.2.7
-tensorflow==1.0.1
+tensorflow==1.15.2
 tqdm==4.8.4
 wrapt==1.10.10
