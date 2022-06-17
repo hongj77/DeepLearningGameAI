@@ -27,7 +27,7 @@ matplotlib==2.0.0
 mccabe==0.5.3
 mock==2.0.0
 -e git+https://github.com/NervanaSystems/neon.git@0d643ddbc0df87ae4a0a3ac493960c3a5e35a4b0#egg=neon
-numpy==1.11.1
+numpy==1.21.0
 opencv-python==3.2.0.7
 packaging==16.8
 pbr==2.1.0
